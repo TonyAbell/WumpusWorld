@@ -142,12 +142,11 @@
     <Compile Include="Types.fs" />
     <Compile Include="Azure.fs" />
     <Compile Include="Helper.fs" />
-    <Compile Include="Global.fs" />
+    <Compile Include="ApiControllers.fs" />
     <Compile Include="HomeController.fs" />
+    <Compile Include="Global.fs" />
     <None Include="App.config" />
     <None Include="packages.config" />
-    <Compile Include="GameControler.fs" />
-    <Compile Include="ValuesController.fs" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '11.0'">

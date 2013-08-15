@@ -3,7 +3,22 @@ open Microsoft.FSharp.Reflection
 open System.Reflection 
 open System.Runtime.Serialization 
 open System.Xml
+open System
+open Microsoft.WindowsAzure.Storage
+open Microsoft.WindowsAzure.Storage.Auth
+open Microsoft.WindowsAzure.Storage.Table
 
+    type ActorSavedState() =
+        inherit TableEntity()
+        member val XPos = 0 with get,set
+        member val YPos = 0 with get,set
+        member val Direction = "" with get,set
+
+    type GameBoard() =
+        inherit TableEntity()      
+        member val Data = "" with get,set
+
+    [<Serializable>]
     [<KnownType("KnownTypes")>] 
     type CellObject = 
         | Wumpus
@@ -12,18 +27,18 @@ open System.Xml
         | Free
         | Start
         override this.ToString() = 
-            let dcs = new DataContractSerializer(typeof<CellObject>)
-            let sb = new System.Text.StringBuilder()
-            let xw = XmlWriter.Create(sb)
-            dcs.WriteObject(xw, this)
-            xw.Close()
-            sb.ToString()           
+            match this with 
+                |  Wumpus -> "Wumpus"
+                |  Pit -> "Pit "
+                |  Gold -> "Gold"
+                |  Free -> "Free"
+                |  Start -> "Strt"   
 
         static member KnownTypes() = // KnownTypes uses the F# reflection API to select only the union types
             typeof<CellObject>.GetNestedTypes(BindingFlags.Public ||| BindingFlags.NonPublic) |> Array.filter FSharpType.IsUnion 
 
 
-
+    [<Serializable>]
     [<KnownType("KnownTypes")>] 
     type CellSenses = 
         | Stench

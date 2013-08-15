@@ -4,26 +4,35 @@ open Microsoft.FSharp.Reflection
 open System.Reflection 
 open System.Runtime.Serialization 
 open System.Runtime.Serialization.Json
+open System.Runtime.Serialization.Formatters.Binary
 open System.Xml
 open System.IO
+open Microsoft.WindowsAzure.Storage.Table
 open Newtonsoft.Json
 
 module Helper = 
-    let dser s = 
-        let settigs = new JsonSerializerSettings()
-        settigs.ConstructorHandling <- ConstructorHandling.AllowNonPublicDefaultConstructor
-
-        let o = JsonConvert.DeserializeObject<(CellObject * CellSenses list) [,]>(s, settigs)
+    let dser (s:string) = 
+        let b = System.Convert.FromBase64String(s)
+        let formatter = new BinaryFormatter()
+        let ms = new MemoryStream(b)        
+        let o = formatter.Deserialize(ms) :?> (CellObject * CellSenses list) [,]
         o
+
     let ser (s:(CellObject * CellSenses list) [,]) =                      
-        let test = JsonConvert.SerializeObject(s)
-        test
+         let formatter = new BinaryFormatter()
+         let ms = new MemoryStream()
+         formatter.Serialize(ms, s);
+         let o = System.Convert.ToBase64String(ms.ToArray())
+         o
+
+
 
 
        
             
-    let createMaze xMax yMax = 
+    let createMaze xMax yMax pits = 
         let rand = System.Random()
+        
         let maze = Array2D.create xMax yMax (Free, List.empty<CellSenses>)
         let inline inMaze x y = 0 <= x && x < xMax && 0 <= y && y < yMax
         maze.[0, 0] <- Start, List.empty<CellSenses>
@@ -82,6 +91,18 @@ module Helper =
         | S(_, _) -> S(newPosition)
         | N(_, _) -> N(newPosition)
     
+    let getActorState (tableResult:TableResult) =
+            if (tableResult.Result <> null) then
+                let s = tableResult.Result :?> ActorSavedState
+                match s.Direction with 
+                    | "N" -> N(s.XPos,s.YPos)
+                    | "S" -> S(s.XPos,s.YPos)
+                    | "W" -> W(s.XPos,s.YPos)
+                    | "E" -> E(s.XPos,s.YPos)
+                    | _ -> N(0,0)                                    
+            else                               
+                N(0,0)
+
     let getNewPos (maze : (CellObject * CellSenses list) [,]) actorState = 
         match actorState with
         | E(x, y) -> inMaze maze (x, y + 1)
@@ -138,7 +159,7 @@ module Helper =
                 | _ -> Silence, currentCellSence, actorState
             | None -> Silence, currentCellSence, actorState
     
-    let sampleMaze = createMaze 5 5
+    let sampleMaze = createMaze 5 5 5
     
     let printMaze (maze : (CellObject * CellSenses list) [,]) = 
         let sb = new System.Text.StringBuilder()
