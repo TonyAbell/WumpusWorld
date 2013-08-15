@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.20623.1 VSUPREVIEW
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WumpusWorldWebApi", "WumpusWorld\WumpusWorldWebApi\WumpusWorldWebApi.csproj", "{C4891C29-68CB-41D6-A5AA-47017B057878}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "WumpusWorldWebAppApi", "WumpusWorld\WumpusWorldWebAppApi\WumpusWorldWebAppApi.fsproj", "{A999575F-C66E-42BF-A70F-655D4C3F0069}"

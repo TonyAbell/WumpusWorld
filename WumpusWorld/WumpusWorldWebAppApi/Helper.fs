@@ -1,6 +1,27 @@
 ﻿namespace WumpusWorld
 
+open Microsoft.FSharp.Reflection 
+open System.Reflection 
+open System.Runtime.Serialization 
+open System.Runtime.Serialization.Json
+open System.Xml
+open System.IO
+open Newtonsoft.Json
+
 module Helper = 
+    let dser s = 
+        let settigs = new JsonSerializerSettings()
+        settigs.ConstructorHandling <- ConstructorHandling.AllowNonPublicDefaultConstructor
+
+        let o = JsonConvert.DeserializeObject<(CellObject * CellSenses list) [,]>(s, settigs)
+        o
+    let ser (s:(CellObject * CellSenses list) [,]) =                      
+        let test = JsonConvert.SerializeObject(s)
+        test
+
+
+       
+            
     let createMaze xMax yMax = 
         let rand = System.Random()
         let maze = Array2D.create xMax yMax (Free, List.empty<CellSenses>)
@@ -39,6 +60,13 @@ module Helper =
         | S(x, y) -> x, y
         | N(x, y) -> x, y
     
+    let getDirectionAsString state = 
+        match state with
+        | E(_, _) -> "E"
+        | W(_, _) -> "W"
+        | S(_, _) -> "S"
+        | N(x, y) -> "N"
+
     let getCellSense (maze : (CellObject * CellSenses list) [,]) (x, y) = 
         let currentCellSence = snd maze.[x, y]
         currentCellSence
@@ -61,8 +89,10 @@ module Helper =
         | S(x, y) -> inMaze maze (x - 1, y)
         | N(x, y) -> inMaze maze (x + 1, y)
     
-    let move (maze : (CellObject * CellSenses list) [,]) 
-        (actorState : ActorState) (action : Action) = 
+    let move 
+        (maze : (CellObject * CellSenses list) [,]) 
+        (actorState : ActorState) 
+        (action : Action) = 
         let currentCellSence = getCellSense maze (getPosition actorState)
         match action with
         | Forward -> 
@@ -108,7 +138,7 @@ module Helper =
                 | _ -> Silence, currentCellSence, actorState
             | None -> Silence, currentCellSence, actorState
     
-    let create = createMaze 5 5
+    let sampleMaze = createMaze 5 5
     
     let printMaze (maze : (CellObject * CellSenses list) [,]) = 
         let sb = new System.Text.StringBuilder()

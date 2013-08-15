@@ -10,18 +10,17 @@ open System.Web.Optimization
 
 type BundleConfig() =
     static member RegisterBundles (bundles:BundleCollection) =
-        bundles.Add(ScriptBundle("~/bundles/jquery").Include("~/Scripts/jquery-1.*"))
+        bundles.Add(ScriptBundle("~/bundles/jquery").Include([|"~/Scripts/jquery-1.*"|]))
 
-        bundles.Add(ScriptBundle("~/bundles/jqueryui").Include("~/Scripts/jquery-ui*"))
+        bundles.Add(ScriptBundle("~/bundles/jqueryui").Include([|"~/Scripts/jquery-ui*"|]))
 
         bundles.Add(ScriptBundle("~/bundles/jqueryval").Include(
-                                     "~/Scripts/jquery.unobtrusive*",
-                                     "~/Scripts/jquery.validate*"))
+                                     [|"~/Scripts/jquery.unobtrusive*";
+                                     "~/Scripts/jquery.validate*"|]))
             
-        bundles.Add(ScriptBundle("~/bundles/modernizr").Include(
-                                     "~/Scripts/modernizr-*"))
+        bundles.Add(ScriptBundle("~/bundles/modernizr").Include([|"~/Scripts/modernizr-*"|]))
 
-        bundles.Add(StyleBundle("~/Content/css").Include("~/Content/*.css"))
+        bundles.Add(StyleBundle("~/Content/css").Include([|"~/Content/*.css"|]))
 
         bundles.Add(StyleBundle("~/Content/themes/base/css").Include(
                                     "~/Content/themes/base/jquery.ui.core.css",
@@ -39,6 +38,7 @@ type BundleConfig() =
 
 type Route = { controller : string; action : string; id : UrlParameter }
 type ApiRoute = { id : RouteParameter }
+type ApiMoveRoute = { session : RouteParameter; action: RouteParameter }
 
 type Global() =
     inherit System.Web.HttpApplication() 
@@ -49,7 +49,9 @@ type Global() =
     static member RegisterRoutes(routes:RouteCollection) =
         routes.IgnoreRoute( "{resource}.axd/{*pathInfo}" )
         routes.MapHttpRoute( "DefaultApi", "api/{controller}/{id}", 
-            { id = RouteParameter.Optional } ) |> ignore
+            { id = RouteParameter.Optional } ) |> ignore        
+        routes.MapHttpRoute( "ActionApi", "api/{controller}/{action}/{id}", 
+            { id = RouteParameter.Optional } ) |> ignore       
         routes.MapRoute("Default", "{controller}/{action}/{id}", 
             { controller = "Home"; action = "Index"; id = UrlParameter.Optional } ) |> ignore
 

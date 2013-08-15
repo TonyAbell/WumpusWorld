@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<JustCodeSettings Version="0.0" Timestamp="e9454baf-069a-477d-ba48-572ee45e4339">
+  <IgnoredErrorsAndWarningsSettings xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+    <IgnoredErrorsAndWarnings Version="2">
+      <FilePath>
+        <FileRelativePath>WumpusWorld/WumpusWorldWebApi/Global.asax</FileRelativePath>
+        <ProjectRelativePath>WumpusWorld/WumpusWorldWebApi/WumpusWorldWebApi.csproj</ProjectRelativePath>
+        <IgnoredElement>
+          <TextualIdentifier>13625834907328324423</TextualIdentifier>
+        </IgnoredElement>
+        <IgnoredElement>
+          <TextualIdentifier>9103419954828095899</TextualIdentifier>
+        </IgnoredElement>
+      </FilePath>
+    </IgnoredErrorsAndWarnings>
+  </IgnoredErrorsAndWarningsSettings>
+</JustCodeSettings>
