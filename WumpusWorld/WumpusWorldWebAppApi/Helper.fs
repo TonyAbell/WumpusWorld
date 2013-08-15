@@ -11,6 +11,7 @@ open Microsoft.WindowsAzure.Storage.Table
 open Newtonsoft.Json
 
 module Helper = 
+    let rand = System.Random()
     let dser (s:string) = 
         let b = System.Convert.FromBase64String(s)
         let formatter = new BinaryFormatter()
@@ -24,39 +25,9 @@ module Helper =
          formatter.Serialize(ms, s);
          let o = System.Convert.ToBase64String(ms.ToArray())
          o
-
-
-
-
-       
-            
-    let createMaze xMax yMax pits = 
-        let rand = System.Random()
-        
-        let maze = Array2D.create xMax yMax (Free, List.empty<CellSenses>)
-        let inline inMaze x y = 0 <= x && x < xMax && 0 <= y && y < yMax
-        maze.[0, 0] <- Start, List.empty<CellSenses>
-        let goldx, goldy = rand.Next(1, xMax), rand.Next(1, yMax)
-        maze.[goldx, goldy] <- Gold, [Glitter]
-        let pitx, pity = rand.Next(1, xMax), rand.Next(1, yMax)
-        maze.[pitx, pity] <- Pit, []
-        if inMaze (pitx - 1) (pity) then 
-            maze.[pitx - 1, pity] <- (fst maze.[pitx - 1, pity]), 
-                                     ((snd maze.[pitx - 1, pity]) @ [Breeze])
-        if inMaze (pitx + 1) (pity) then 
-            maze.[pitx + 1, pity] <- (fst maze.[pitx + 1, pity]), 
-                                     ((snd maze.[pitx + 1, pity]) @ [Breeze])
-        if inMaze (pitx) (pity - 1) then 
-            maze.[pitx, pity - 1] <- (fst maze.[pitx, pity - 1]), 
-                                     ((snd maze.[pitx, pity - 1]) @ [Breeze])
-        if inMaze (pitx) (pity + 1) then 
-            maze.[pitx, pity + 1] <- (fst maze.[pitx, pity + 1]), 
-                                     ((snd maze.[pitx, pity + 1]) @ [Breeze])
-        maze
-    
-    let inMaze' xMax yMax x y = 0 <= x && x < xMax && 0 <= y && y < yMax
-    
+                               
     let inMaze (maze : (CellObject * CellSenses list) [,]) (x, y) = 
+        let inline inMaze' xMax yMax x y = 0 <= x && x < xMax && 0 <= y && y < yMax
         let maxX = Array2D.length1 maze
         let maxY = Array2D.length2 maze
         if (inMaze' maxX maxY x y) then Some(x, y)
@@ -95,14 +66,24 @@ module Helper =
             if (tableResult.Result <> null) then
                 let s = tableResult.Result :?> ActorSavedState
                 match s.Direction with 
-                    | "N" -> N(s.XPos,s.YPos)
+                    | "N" -> Some( N(s.XPos,s.YPos))
+                    | "S" -> Some(S(s.XPos,s.YPos))
+                    | "W" -> Some(W(s.XPos,s.YPos))
+                    | "E" -> Some(E(s.XPos,s.YPos))
+                    | _ -> None                                
+            else                               
+                None
+    let getActorStateDefault (tableResult:TableResult) =
+            if (tableResult.Result <> null) then
+                let s = tableResult.Result :?> ActorSavedState
+                match s.Direction with 
+                    | "N" ->  N(s.XPos,s.YPos)
                     | "S" -> S(s.XPos,s.YPos)
                     | "W" -> W(s.XPos,s.YPos)
                     | "E" -> E(s.XPos,s.YPos)
-                    | _ -> N(0,0)                                    
+                    | _ -> S(0,0)                                
             else                               
-                N(0,0)
-
+                S(0,0)  
     let getNewPos (maze : (CellObject * CellSenses list) [,]) actorState = 
         match actorState with
         | E(x, y) -> inMaze maze (x, y + 1)
@@ -159,6 +140,42 @@ module Helper =
                 | _ -> Silence, currentCellSence, actorState
             | None -> Silence, currentCellSence, actorState
     
+
+    let rec addCellObject maze cellObj sense  =
+        let xMax, yMax = (maze |> Array2D.length1),(maze |> Array2D.length2)
+        
+        let pos = rand.Next(2, xMax), rand.Next(2, yMax)
+        let x, y = pos
+        let inline inMaze x y = 0 <= x && x < xMax && 0 <= y && y < yMax
+        match getCellObject maze pos with
+            | Free ->   maze.[x, y] <- cellObj, []
+                        if inMaze (x - 1) (y) then 
+                            maze.[x - 1, y] <- (fst maze.[x - 1, y]), ((snd maze.[x - 1, y]) @ [sense])
+                        if inMaze (x + 1) (y) then 
+                            maze.[x + 1, y] <- (fst maze.[x + 1, y]), ((snd maze.[x + 1, y]) @ [sense])
+                        if inMaze (x) (y - 1) then 
+                            maze.[x, y - 1] <- (fst maze.[x, y - 1]), ((snd maze.[x, y - 1]) @ [sense])
+                        if inMaze (x) (y + 1) then 
+                            maze.[x, y + 1] <- (fst maze.[x, y + 1]), ((snd maze.[x, y + 1]) @ [sense])
+            | _ -> addCellObject maze cellObj sense 
+        ()
+
+ 
+    let createMaze xMax yMax pits =        
+        
+        let maze = Array2D.create xMax yMax (Free, List.empty<CellSenses>)
+        let inline inMaze x y = 0 <= x && x < xMax && 0 <= y && y < yMax
+        maze.[0, 0] <- Start, List.empty<CellSenses>
+        let goldx, goldy = rand.Next(2, xMax), rand.Next(2, yMax)
+        maze.[goldx, goldy] <- Gold, [Glitter]
+      
+        for _ in 1 .. pits do
+            addCellObject maze Pit Breeze
+
+        addCellObject maze Wumpus Stench
+
+        maze    
+
     let sampleMaze = createMaze 5 5 5
     
     let printMaze (maze : (CellObject * CellSenses list) [,]) = 

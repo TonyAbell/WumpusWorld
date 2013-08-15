@@ -23,17 +23,12 @@ type MoveController() =
     
     let moveActorAndSaveNewState id action = 
         async { 
-            let retrieveGameBoard = 
-                TableOperation.Retrieve<GameBoard>("game", id)
-            let! retrieveGameBoardResult = Azure.executeOnGameboardTable 
-                                               retrieveGameBoard
-            let maze = 
-                Helper.dser (retrieveGameBoardResult.Result :?> GameBoard).Data
-            let retrieveSavedStateOp = 
-                TableOperation.Retrieve<ActorSavedState>("state", id)
-            let! retrievedResult = Azure.executeOnActorStateTable 
-                                       retrieveSavedStateOp
-            let state = Helper.getActorState retrievedResult
+            let retrieveGameBoard = TableOperation.Retrieve<GameBoard>("game", id)
+            let! retrieveGameBoardResult = Azure.executeOnGameboardTable retrieveGameBoard
+            let maze = Helper.dser (retrieveGameBoardResult.Result :?> GameBoard).Data
+            let retrieveSavedStateOp = TableOperation.Retrieve<ActorSavedState>("state", id)
+            let! retrievedResult = Azure.executeOnActorStateTable retrieveSavedStateOp
+            let state = Helper.getActorStateDefault retrievedResult
             let a, b, c = Helper.move maze state action
             let xPos, yPos = Helper.getPosition c
             let s = new ActorSavedState()
@@ -43,12 +38,12 @@ type MoveController() =
             s.YPos <- yPos
             s.Direction <- Helper.getDirectionAsString c
             let insertOrReplaceOperation = TableOperation.InsertOrReplace(s)
-            let! insertOrReplaceResult = Azure.executeOnActorStateTable 
-                                             insertOrReplaceOperation
-            let b' = List.map (fun f -> f.ToString()) b
+            let! insertOrReplaceResult = Azure.executeOnActorStateTable insertOrReplaceOperation
+            
             return { ActionSenses = a.ToString()
-                     CellSenses = b'
-                     ActorState = c.ToString() } }
+                     CellSenses = List.map (fun f -> f.ToString()) b
+                     ActorState = c.ToString() } 
+        }
     
     [<HttpGet>]
     // GET /api/values
@@ -96,7 +91,7 @@ type GameController() =
         |> Async.StartAsTask
     
     [<HttpGet>]
-    member x.Status(id : string) = "abc"
+    member x.Status(id : string) = "sample status"
     
     [<HttpGet>]
     member x.Board(id : string) = 
