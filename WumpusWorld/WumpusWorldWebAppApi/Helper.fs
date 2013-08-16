@@ -32,7 +32,15 @@ module Helper =
         let maxY = Array2D.length2 maze
         if (inMaze' maxX maxY x y) then Some(x, y)
         else None
-    
+    let getMazeFromTable (table:TableResult) =
+        match table with
+            | null -> None
+            | t -> match t.Result with 
+                    | null -> None
+                    | r -> Some(dser (r :?> GameBoard).Data)
+        
+        
+
     let getPosition state = 
         match state with
         | E(x, y) -> x, y
@@ -63,16 +71,18 @@ module Helper =
         | N(_, _) -> N(newPosition)
     
     let getActorState (tableResult:TableResult) =
-            if (tableResult.Result <> null) then
-                let s = tableResult.Result :?> ActorSavedState
-                match s.Direction with 
-                    | "N" -> Some( N(s.XPos,s.YPos))
-                    | "S" -> Some(S(s.XPos,s.YPos))
-                    | "W" -> Some(W(s.XPos,s.YPos))
-                    | "E" -> Some(E(s.XPos,s.YPos))
-                    | _ -> None                                
-            else                               
-                None
+           match tableResult with
+            | null -> None
+            | t -> match t.Result with
+                     | null -> None
+                     | r -> let s = r :?> ActorSavedState
+                            match s.Direction with 
+                                | "N" -> Some( N(s.XPos,s.YPos))
+                                | "S" -> Some(S(s.XPos,s.YPos))
+                                | "W" -> Some(W(s.XPos,s.YPos))
+                                | "E" -> Some(E(s.XPos,s.YPos))
+                                | _ -> None     
+          
     let getActorStateDefault (tableResult:TableResult) =
             if (tableResult.Result <> null) then
                 let s = tableResult.Result :?> ActorSavedState
@@ -88,8 +98,8 @@ module Helper =
         match actorState with
         | E(x, y) -> inMaze maze (x, y + 1)
         | W(x, y) -> inMaze maze (x, y - 1)
-        | S(x, y) -> inMaze maze (x - 1, y)
-        | N(x, y) -> inMaze maze (x + 1, y)
+        | S(x, y) -> inMaze maze (x + 1, y)
+        | N(x, y) -> inMaze maze (x - 1, y)
     
     let move 
         (maze : (CellObject * CellSenses list) [,]) 

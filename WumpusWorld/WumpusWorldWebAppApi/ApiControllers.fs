@@ -5,6 +5,7 @@ open System.Web
 open System.Web.Mvc
 open System.Net.Http
 open System.Web.Http
+open System.Net
 open System.Runtime.Serialization
 open System.Data.Services.Common
 open Microsoft.WindowsAzure.Storage
@@ -25,51 +26,85 @@ type MoveController() =
         async { 
             let retrieveGameBoard = TableOperation.Retrieve<GameBoard>("game", id)
             let! retrieveGameBoardResult = Azure.executeOnGameboardTable retrieveGameBoard
-            let maze = Helper.dser (retrieveGameBoardResult.Result :?> GameBoard).Data
+            
+            let m = Helper.getMazeFromTable retrieveGameBoardResult
+            //let maze = Helper.dser (retrieveGameBoardResult.Result :?> GameBoard).Data
             let retrieveSavedStateOp = TableOperation.Retrieve<ActorSavedState>("state", id)
             let! retrievedResult = Azure.executeOnActorStateTable retrieveSavedStateOp
-            let state = Helper.getActorStateDefault retrievedResult
-            let a, b, c = Helper.move maze state action
-            let xPos, yPos = Helper.getPosition c
-            let s = new ActorSavedState()
-            s.PartitionKey <- "state"
-            s.RowKey <- id
-            s.XPos <- xPos
-            s.YPos <- yPos
-            s.Direction <- Helper.getDirectionAsString c
-            let insertOrReplaceOperation = TableOperation.InsertOrReplace(s)
-            let! insertOrReplaceResult = Azure.executeOnActorStateTable insertOrReplaceOperation
+            //let state = Helper.getActorStateDefault retrievedResult
+            let st = Helper.getActorState retrievedResult
+
+            return match m,st with 
+                            | Some(maze), Some(state) -> let a, b, c = Helper.move maze state action
+                                                         let xPos, yPos = Helper.getPosition c
+                                                         let s = new ActorSavedState()
+                                                         s.PartitionKey <- "state"
+                                                         s.RowKey <- id
+                                                         s.XPos <- xPos
+                                                         s.YPos <- yPos
+                                                         s.Direction <- Helper.getDirectionAsString c
+                                                       
+                                                         let insertOrReplaceOperation = TableOperation.InsertOrReplace(s)
+                                                         
+                                                         Azure.executeOnActorStateTable insertOrReplaceOperation 
+                                                            |> Async.RunSynchronously 
+                                                            |> ignore
+                                                         let r = Some({ActionSenses = a.ToString(); 
+                                                                      CellSenses = List.map (fun f -> f.ToString()) b; 
+                                                                      ActorState = c.ToString()})
+                                                         r
+                            | _, _ -> None
+
             
-            return { ActionSenses = a.ToString()
-                     CellSenses = List.map (fun f -> f.ToString()) b
-                     ActorState = c.ToString() } 
+            
+            
+           
+            
+           
         }
     
     [<HttpGet>]
     // GET /api/values
-    member x.Forward(id : string) = 
+    member x.Forward(id : string) =
+        
         async { let! newState = moveActorAndSaveNewState id Forward
-                return newState } |> Async.StartAsTask
+                return match newState with 
+                                | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
+                                | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
+
+                } |> Async.StartAsTask
     
     [<HttpGet>]
     member x.Left(id : string) = 
          async { let! newState = moveActorAndSaveNewState id Left
-                return newState } |> Async.StartAsTask
+                 return match newState with 
+                                | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
+                                | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
+                } |> Async.StartAsTask
     
     [<HttpGet>]
     member x.Right(id : string) = 
         async { let! newState = moveActorAndSaveNewState id Right
-                return newState } |> Async.StartAsTask
+                return match newState with 
+                                | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
+                                | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
+                } |> Async.StartAsTask
     
     [<HttpGet>]
     member x.Shoot(id : string) = 
          async { let! newState = moveActorAndSaveNewState id Shoot
-                return newState } |> Async.StartAsTask
+                 return match newState with 
+                                | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
+                                | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
+                } |> Async.StartAsTask
     
     [<HttpGet>]
     member x.Grab(id : string) = 
          async { let! newState = moveActorAndSaveNewState id Grab
-                return newState } |> Async.StartAsTask
+                 return match newState with 
+                                | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
+                                | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
+                } |> Async.StartAsTask
 
 type GameController() = 
     inherit ApiController()
