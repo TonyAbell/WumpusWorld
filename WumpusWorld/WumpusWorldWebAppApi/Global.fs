@@ -50,8 +50,8 @@ type Global() =
         routes.IgnoreRoute( "{resource}.axd/{*pathInfo}" )
         routes.MapHttpRoute( "DefaultApi", "api/{controller}/{id}", 
             { id = RouteParameter.Optional } ) |> ignore        
-        routes.MapHttpRoute( "ActionApi", "api/{controller}/{action}/{id}", 
-            { id = RouteParameter.Optional } ) |> ignore       
+//        routes.MapHttpRoute( "ActionApi", "api/{controller}/{action}/{id}", 
+//            { id = RouteParameter.Optional } ) |> ignore       
         routes.MapRoute("Default", "{controller}/{action}/{id}", 
             { controller = "Home"; action = "Index"; id = UrlParameter.Optional } ) |> ignore
 

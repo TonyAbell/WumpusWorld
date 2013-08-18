@@ -22,127 +22,135 @@ type State =
 type MoveController() = 
     inherit ApiController()
     
-    let moveActorAndSaveNewState id action = 
+    let moveActorAndSaveNewGameState boardId gameId action = 
         async { 
-            let retrieveGameBoard = TableOperation.Retrieve<GameBoard>("game", id)
-            let! retrieveGameBoardResult = Azure.executeOnGameboardTable retrieveGameBoard
             
-            let m = Helper.getMazeFromTable retrieveGameBoardResult
-            //let maze = Helper.dser (retrieveGameBoardResult.Result :?> GameBoard).Data
-            let retrieveSavedStateOp = TableOperation.Retrieve<ActorSavedState>("state", id)
-            let! retrievedResult = Azure.executeOnActorStateTable retrieveSavedStateOp
-            //let state = Helper.getActorStateDefault retrievedResult
-            let st = Helper.getActorState retrievedResult
+            let! retrieveGameBoardResult = Azure.executeOn_boardTable (Azure.findBoardOp boardId)            
+            let board = Helper.getMazeFromTable retrieveGameBoardResult                       
+            let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardId gameId)           
+            let gameState = Helper.getGameState retrievedResult           
 
-            return match m,st with 
-                            | Some(maze), Some(state) -> let a, b, c = Helper.move maze state action
-                                                         let xPos, yPos = Helper.getPosition c
-                                                         let s = new ActorSavedState()
-                                                         s.PartitionKey <- "state"
-                                                         s.RowKey <- id
-                                                         s.XPos <- xPos
-                                                         s.YPos <- yPos
-                                                         s.Direction <- Helper.getDirectionAsString c
-                                                       
-                                                         let insertOrReplaceOperation = TableOperation.InsertOrReplace(s)
-                                                         
-                                                         Azure.executeOnActorStateTable insertOrReplaceOperation 
-                                                            |> Async.RunSynchronously 
-                                                            |> ignore
-                                                         let r = Some({ActionSenses = a.ToString(); 
-                                                                      CellSenses = List.map (fun f -> f.ToString()) b; 
-                                                                      ActorState = c.ToString()})
-                                                         r
-                            | _, _ -> None
-
-            
-            
-            
-           
-            
-           
+            return! match board,gameState with 
+                            | Some(maze), Some(state) ->  async{     
+                                                            let actionSense, cellSenses, newGameState = Helper.move maze state action
+                                                            let xPos, yPos,dir = Helper.getPositionWithDirection newGameState                                                                                                               
+                                                            let insertOrReplaceOperation = Azure.insertOrUpdateGameStateOp boardId gameId xPos yPos dir                                                         
+                                                            let! insertResutl = Azure.executeOn_gameStateTable insertOrReplaceOperation                                                                      
+                                                            return  Some({ActionSenses = actionSense.ToString(); CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = newGameState.ToString()})                                                                    
+                                                            }
+                            | _, _ -> async{return None}                                                                   
         }
     
-    [<HttpGet>]
-    // GET /api/values
-    member x.Forward(id : string) =
+    [<HttpGet("api/board/{boardid}/game/{gameid}/forward")>]
+    member x.Forward(boardid : string, gameid: string) =
         
-        async { let! newState = moveActorAndSaveNewState id Forward
+        async { let! newState = moveActorAndSaveNewGameState boardid gameid Forward
                 return match newState with 
                                 | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
 
                 } |> Async.StartAsTask
     
-    [<HttpGet>]
-    member x.Left(id : string) = 
-         async { let! newState = moveActorAndSaveNewState id Left
+    [<HttpGet("api/board/{boardid}/game/{gameid}/left")>]
+    member x.Left(boardid : string, gameid: string) = 
+         async { let!newState = moveActorAndSaveNewGameState boardid gameid Left
                  return match newState with 
                                 | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
                 } |> Async.StartAsTask
     
-    [<HttpGet>]
-    member x.Right(id : string) = 
-        async { let! newState = moveActorAndSaveNewState id Right
+    [<HttpGet("api/board/{boardid}/game/{gameid}/right")>]
+    member x.Right(boardid : string, gameid: string) = 
+        async { let!newState = moveActorAndSaveNewGameState boardid gameid Right
                 return match newState with 
                                 | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
                 } |> Async.StartAsTask
     
-    [<HttpGet>]
-    member x.Shoot(id : string) = 
-         async { let! newState = moveActorAndSaveNewState id Shoot
+    [<HttpGet("api/board/{boardid}/game/{gameid}/shoot")>]
+    member x.Shoot(boardid : string, gameid: string) = 
+         async { let!newState = moveActorAndSaveNewGameState boardid gameid Shoot
                  return match newState with 
                                 | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
                 } |> Async.StartAsTask
     
-    [<HttpGet>]
-    member x.Grab(id : string) = 
-         async { let! newState = moveActorAndSaveNewState id Grab
+    [<HttpGet("api/board/{boardid}/game/{gameid}/grab")>]
+    member x.Grab(boardid : string, gameid: string) = 
+         async { let!newState = moveActorAndSaveNewGameState boardid gameid  Grab
                  return match newState with 
                                 | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
                 } |> Async.StartAsTask
+
+
 
 type GameController() = 
     inherit ApiController()
-    
-    [<HttpGet>]
-    member x.Start() = 
+    let r = new System.Random()
+    [<HttpGet("api/board/new")>]
+    member x.NewBoard() =
         async { 
-            let r = new System.Random()
-            let nextId = r.Next(1, System.Int32.MaxValue)
-            let newMaze = Helper.createMaze 10 10
-            let g = new GameBoard()
-            g.PartitionKey <- "game"
-            g.RowKey <- nextId.ToString()
-            g.Data <- Helper.ser (newMaze 5)
-            let insertOrReplaceOperation = TableOperation.InsertOrReplace(g)
-            let! insertOrReplaceResult = Azure.executeOnGameboardTable 
-                                             insertOrReplaceOperation
-            return nextId }
+                    
+                    let nextId = r.Next(1, System.Int32.MaxValue)
+                    let newMaze = Helper.createMaze 10 10
+                    let newBoardId = nextId.ToString()
+                    let boardData = Helper.ser (newMaze 5)
+                    let g = new Board()           
+                    let! insertOrReplaceResult = Azure.executeOn_boardTable (Azure.insertOrUpdateBoard newBoardId boardData)
+                    return nextId 
+                   
+        } |> Async.StartAsTask
+
+    [<HttpGet("api/board/{boardid}/game/new")>]
+    member x.NewGame(boardId:string) = 
+        async { 
+                let nextId = r.Next(1, System.Int32.MaxValue).ToString()
+                let! retrieveGameBoardResult = Azure.executeOn_boardTable (Azure.findBoardOp boardId)            
+                let board = Helper.getMazeFromTable retrieveGameBoardResult  
+                return! match board with 
+                                | Some b -> async {
+                                                let! insertResutl = Azure.executeOn_gameStateTable (Azure.insertOrUpdateGameStateOp boardId nextId 0 0 "S")   
+                                                return x.Request.CreateResponse<string>(HttpStatusCode.OK, nextId)
+                                            }
+                                | None ->  async {return x.Request.CreateResponse(HttpStatusCode.BadRequest)}
+                 
+           }
         |> Async.StartAsTask
     
-    [<HttpGet>]
-    member x.Status(id : string) = "sample status"
-    
-    [<HttpGet>]
-    member x.Board(id : string) = 
+    [<HttpGet("api/board/{boardid}/game/{gameid}/status")>]
+    member x.Status(boardid : string, gameid: string) = 
         async { 
-            let retrieveGameBoard = 
-                TableOperation.Retrieve<GameBoard>("game", id)
-            let! retrieveGameBoardResult = Azure.executeOnGameboardTable 
-                                               retrieveGameBoard
-            let maze = 
-                Helper.dser (retrieveGameBoardResult.Result :?> GameBoard).Data
-            let lenght = maze |> Array2D.length1            
+                let! retrieveGameBoardResult = Azure.executeOn_boardTable (Azure.findBoardOp boardid)            
+                let board = Helper.getMazeFromTable retrieveGameBoardResult       
+                let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardid gameid)           
+                let gameState = Helper.getGameState retrievedResult 
+                return match gameState, board with 
+                                | Some(state), Some(maze) -> let xPos, yPos,dir = Helper.getPositionWithDirection state   
+                                                             let cellSenses = Helper.getCellSense (maze) (xPos, yPos)  
+                                                             let returnState = {ActionSenses = ""; CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = state.ToString()}
+                                                             x.Request.CreateResponse<State>(HttpStatusCode.OK, returnState)
+                                | _, _ -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
+        }
+         |> Async.StartAsTask
+    [<HttpGet("api/board/{boardid}/view")>]
+    member x.Board(boardid : string) = 
+        async { 
+            
+            let! retrieveGameBoardResult = Azure.executeOn_boardTable (Azure.findBoardOp boardid)            
+            let board = Helper.getMazeFromTable retrieveGameBoardResult      
+            return match board with
+                            | Some maze -> let lenght = maze |> Array2D.length1  
+                                           let view  = seq {  for i in 0..lenght - 1 do
+                                                                yield seq { 
+                                                                    for u in 0..lenght - 1 do
+                                                                        let c, s = maze.[i, u]
+                                                                        yield c.ToString() } }
+                                                      
 
-            return seq { 
-                    for i in 0..lenght - 1 do
-                        yield seq { 
-                            for u in 0..lenght - 1 do
-                                let c, s = maze.[i, u]
-                                yield c.ToString() } }
+                                           x.Request.CreateResponse<seq<seq<string>>>(HttpStatusCode.OK, view)
+                            | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
+                      
+
+            
         } |> Async.StartAsTask

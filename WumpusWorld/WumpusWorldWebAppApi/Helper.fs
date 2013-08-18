@@ -16,17 +16,17 @@ module Helper =
         let b = System.Convert.FromBase64String(s)
         let formatter = new BinaryFormatter()
         let ms = new MemoryStream(b)        
-        let o = formatter.Deserialize(ms) :?> (CellObject * CellSenses list) [,]
+        let o = formatter.Deserialize(ms) :?> (CellObject * CellSense list) [,]
         o
 
-    let ser (s:(CellObject * CellSenses list) [,]) =                      
+    let ser (s:(CellObject * CellSense list) [,]) =                      
          let formatter = new BinaryFormatter()
          let ms = new MemoryStream()
          formatter.Serialize(ms, s);
          let o = System.Convert.ToBase64String(ms.ToArray())
          o
                                
-    let inMaze (maze : (CellObject * CellSenses list) [,]) (x, y) = 
+    let inMaze (maze : (CellObject * CellSense list) [,]) (x, y) = 
         let inline inMaze' xMax yMax x y = 0 <= x && x < xMax && 0 <= y && y < yMax
         let maxX = Array2D.length1 maze
         let maxY = Array2D.length2 maze
@@ -37,7 +37,7 @@ module Helper =
             | null -> None
             | t -> match t.Result with 
                     | null -> None
-                    | r -> Some(dser (r :?> GameBoard).Data)
+                    | r -> Some(dser (r :?> Board).MapData)
         
         
 
@@ -47,7 +47,12 @@ module Helper =
         | W(x, y) -> x, y
         | S(x, y) -> x, y
         | N(x, y) -> x, y
-    
+    let getPositionWithDirection state = 
+        match state with
+        | E(x, y) -> x, y, "E"
+        | W(x, y) -> x, y, "W"
+        | S(x, y) -> x, y, "S"
+        | N(x, y) -> x, y, "N"
     let getDirectionAsString state = 
         match state with
         | E(_, _) -> "E"
@@ -55,27 +60,27 @@ module Helper =
         | S(_, _) -> "S"
         | N(x, y) -> "N"
 
-    let getCellSense (maze : (CellObject * CellSenses list) [,]) (x, y) = 
+    let getCellSense (maze : (CellObject * CellSense list) [,]) (x, y) = 
         let currentCellSence = snd maze.[x, y]
         currentCellSence
     
-    let getCellObject (maze : (CellObject * CellSenses list) [,]) (x, y) = 
+    let getCellObject (maze : (CellObject * CellSense list) [,]) (x, y) = 
         let currentObject = fst maze.[x, y]
         currentObject
     
-    let getNewActorState currentState newPosition = 
+    let getNewGameState currentState newPosition = 
         match currentState with
         | E(_, _) -> E(newPosition)
         | W(_, _) -> W(newPosition)
         | S(_, _) -> S(newPosition)
         | N(_, _) -> N(newPosition)
     
-    let getActorState (tableResult:TableResult) =
+    let getGameState (tableResult:TableResult) =
            match tableResult with
             | null -> None
             | t -> match t.Result with
                      | null -> None
-                     | r -> let s = r :?> ActorSavedState
+                     | r -> let s = r :?> GameState
                             match s.Direction with 
                                 | "N" -> Some( N(s.XPos,s.YPos))
                                 | "S" -> Some(S(s.XPos,s.YPos))
@@ -83,9 +88,9 @@ module Helper =
                                 | "E" -> Some(E(s.XPos,s.YPos))
                                 | _ -> None     
           
-    let getActorStateDefault (tableResult:TableResult) =
+    let getGameStateDefault (tableResult:TableResult) =
             if (tableResult.Result <> null) then
-                let s = tableResult.Result :?> ActorSavedState
+                let s = tableResult.Result :?> GameState
                 match s.Direction with 
                     | "N" ->  N(s.XPos,s.YPos)
                     | "S" -> S(s.XPos,s.YPos)
@@ -94,7 +99,7 @@ module Helper =
                     | _ -> S(0,0)                                
             else                               
                 S(0,0)  
-    let getNewPos (maze : (CellObject * CellSenses list) [,]) actorState = 
+    let getNewPos (maze : (CellObject * CellSense list) [,]) actorState = 
         match actorState with
         | E(x, y) -> inMaze maze (x, y + 1)
         | W(x, y) -> inMaze maze (x, y - 1)
@@ -102,7 +107,7 @@ module Helper =
         | N(x, y) -> inMaze maze (x - 1, y)
     
     let move 
-        (maze : (CellObject * CellSenses list) [,]) 
+        (maze : (CellObject * CellSense list) [,]) 
         (actorState : ActorState) 
         (action : Action) = 
         let currentCellSence = getCellSense maze (getPosition actorState)
@@ -115,13 +120,13 @@ module Helper =
                 let newCellSense = getCellSense maze pos
                 match cellObj with
                 | Wumpus -> 
-                    Eaten, currentCellSence, (getNewActorState actorState pos)
+                    Eaten, currentCellSence, (getNewGameState actorState pos)
                 | Pit -> 
-                    Fell, currentCellSence, (getNewActorState actorState pos)
-                | Gold -> Moved, newCellSense, (getNewActorState actorState pos)
-                | Free -> Moved, newCellSense, (getNewActorState actorState pos)
+                    Fell, currentCellSence, (getNewGameState actorState pos)
+                | Gold -> Moved, newCellSense, (getNewGameState actorState pos)
+                | Free -> Moved, newCellSense, (getNewGameState actorState pos)
                 | Start -> 
-                    Moved, newCellSense, (getNewActorState actorState pos)
+                    Moved, newCellSense, (getNewGameState actorState pos)
             | None -> Bump, currentCellSence, actorState
         | Left -> 
             match actorState with
@@ -173,9 +178,9 @@ module Helper =
  
     let createMaze xMax yMax pits =        
         
-        let maze = Array2D.create xMax yMax (Free, List.empty<CellSenses>)
+        let maze = Array2D.create xMax yMax (Free, List.empty<CellSense>)
         let inline inMaze x y = 0 <= x && x < xMax && 0 <= y && y < yMax
-        maze.[0, 0] <- Start, List.empty<CellSenses>
+        maze.[0, 0] <- Start, List.empty<CellSense>
         let goldx, goldy = rand.Next(2, xMax), rand.Next(2, yMax)
         maze.[goldx, goldy] <- Gold, [Glitter]
       
@@ -188,7 +193,7 @@ module Helper =
 
     let sampleMaze = createMaze 5 5 5
     
-    let printMaze (maze : (CellObject * CellSenses list) [,]) = 
+    let printMaze (maze : (CellObject * CellSense list) [,]) = 
         let sb = new System.Text.StringBuilder()
         sb.AppendLine() |> ignore
         for x in 0..maze.GetLength(0) - 1 do

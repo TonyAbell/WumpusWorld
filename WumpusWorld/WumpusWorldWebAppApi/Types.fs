@@ -8,18 +8,23 @@ open Microsoft.WindowsAzure.Storage
 open Microsoft.WindowsAzure.Storage.Auth
 open Microsoft.WindowsAzure.Storage.Table
 
-    type ActorSavedState() =
+    type GameState() =
         inherit TableEntity()
         member val XPos = 0 with get,set
         member val YPos = 0 with get,set
         member val Direction = "" with get,set
 
-    type GameBoard() =
+    type GameLog() =
+        inherit TableEntity()    
+        member val Action = "" with get,set
+        
+    type Board() =
         inherit TableEntity()      
-        member val Data = "" with get,set
+        member val MapData = "" with get,set
+
+
 
     [<Serializable>]
-    [<KnownType("KnownTypes")>] 
     type CellObject = 
         | Wumpus
         | Pit
@@ -32,29 +37,18 @@ open Microsoft.WindowsAzure.Storage.Table
                 |  Pit -> "Pit "
                 |  Gold -> "Gold"
                 |  Free -> "Free"
-                |  Start -> "Strt"   
-
-        static member KnownTypes() = // KnownTypes uses the F# reflection API to select only the union types
-            typeof<CellObject>.GetNestedTypes(BindingFlags.Public ||| BindingFlags.NonPublic) |> Array.filter FSharpType.IsUnion 
-
+                |  Start -> "Strt"       
 
     [<Serializable>]
-    [<KnownType("KnownTypes")>] 
-    type CellSenses = 
+    type CellSense = 
         | Stench
         | Breeze
         | Glitter              
         override this.ToString() = 
-            let dcs = new DataContractSerializer(typeof<CellSenses>)
-            let sb = new System.Text.StringBuilder()
-            let xw = XmlWriter.Create(sb)
-            dcs.WriteObject(xw, this)
-            xw.Close()
-            sb.ToString()     
-        static member KnownTypes() = // KnownTypes uses the F# reflection API to select only the union types
-            typeof<CellSenses>.GetNestedTypes(BindingFlags.Public ||| BindingFlags.NonPublic) |> Array.filter FSharpType.IsUnion 
-
-        
+            match this with 
+                 | Stench  -> "Stench"
+                 | Breeze  -> "Breeze"
+                 | Glitter -> "Glitter"          
 
     type Action = 
         | Forward
@@ -75,7 +69,7 @@ open Microsoft.WindowsAzure.Storage.Table
             | S(x,y) -> sprintf "%s(%i,%i)" "S" x y
             | N(x,y) -> sprintf "%s(%i,%i)" "N" x y
 
-    type ActionSenses = 
+    type ActionSense = 
         | Bump
         | Screem
         | Silence
