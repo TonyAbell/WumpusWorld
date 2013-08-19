@@ -33,11 +33,13 @@ let findGameStateOp boardId gameId =
     let op = TableOperation.Retrieve<GameState>(boardId, gameId)
     op
 
-let insertOrUpdateBoard id mapData = 
+let insertOrUpdateBoard id mapData size pits = 
     let g = new Board()
     g.PartitionKey <- "board"
     g.RowKey <- id
     g.MapData <- mapData 
+    g.Size <- size
+    g.Pits <- pits
     let op = TableOperation.InsertOrReplace(g)
     op
 

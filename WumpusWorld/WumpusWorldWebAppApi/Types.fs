@@ -21,6 +21,9 @@ open Microsoft.WindowsAzure.Storage.Table
     type Board() =
         inherit TableEntity()      
         member val MapData = "" with get,set
+        member val Size = 0 with get,set
+        member val Pits = 0 with get,set
+
 
 
 

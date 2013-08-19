@@ -111,6 +111,7 @@ module Helper =
         (actorState : ActorState) 
         (action : Action) = 
         let currentCellSence = getCellSense maze (getPosition actorState)
+        
         match action with
         | Forward -> 
             let xy = getNewPos maze actorState

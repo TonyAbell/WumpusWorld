@@ -32,11 +32,20 @@ type MoveController() =
 
             return! match board,gameState with 
                             | Some(maze), Some(state) ->  async{     
-                                                            let actionSense, cellSenses, newGameState = Helper.move maze state action
-                                                            let xPos, yPos,dir = Helper.getPositionWithDirection newGameState                                                                                                               
-                                                            let insertOrReplaceOperation = Azure.insertOrUpdateGameStateOp boardId gameId xPos yPos dir                                                         
-                                                            let! insertResutl = Azure.executeOn_gameStateTable insertOrReplaceOperation                                                                      
-                                                            return  Some({ActionSenses = actionSense.ToString(); CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = newGameState.ToString()})                                                                    
+                                                            let currentPos = Helper.getPosition state
+                                                            let currentCellObj = Helper.getCellObject maze currentPos
+                                                            return! match currentCellObj with 
+                                                                            | Pit | Wumpus -> async{ 
+                                                                                            return Some({ActionSenses = "Dead"; CellSenses = []; ActorState = state.ToString()})
+                                                                                        }
+                                                                            | _ -> async{ 
+                                                                                            let actionSense, cellSenses, newGameState = Helper.move maze state action
+                                                                                            let xPos, yPos,dir = Helper.getPositionWithDirection newGameState                                                                                                               
+                                                                                            let insertOrReplaceOperation = Azure.insertOrUpdateGameStateOp boardId gameId xPos yPos dir                                                         
+                                                                                            let! insertResutl = Azure.executeOn_gameStateTable insertOrReplaceOperation                                                                      
+                                                                                            return  Some({ActionSenses = actionSense.ToString(); CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = newGameState.ToString()})                                                                                                                                                               
+                                                                                         }
+                                                            
                                                             }
                             | _, _ -> async{return None}                                                                   
         }
@@ -88,16 +97,17 @@ type MoveController() =
 type GameController() = 
     inherit ApiController()
     let r = new System.Random()
-    [<HttpGet("api/board/new")>]
-    member x.NewBoard() =
+    [<HttpGet("api/board/new/{size=10}/{pits=5}")>]
+    member x.NewBoard(size:int, pits:int) =
         async { 
-                    
+                    let t = size
+
                     let nextId = r.Next(1, System.Int32.MaxValue)
-                    let newMaze = Helper.createMaze 10 10
+                    let newMaze = Helper.createMaze size size
                     let newBoardId = nextId.ToString()
-                    let boardData = Helper.ser (newMaze 5)
+                    let boardData = Helper.ser (newMaze pits)
                     let g = new Board()           
-                    let! insertOrReplaceResult = Azure.executeOn_boardTable (Azure.insertOrUpdateBoard newBoardId boardData)
+                    let! insertOrReplaceResult = Azure.executeOn_boardTable (Azure.insertOrUpdateBoard newBoardId boardData size pits)
                     return nextId 
                    
         } |> Async.StartAsTask
@@ -127,8 +137,12 @@ type GameController() =
                 let gameState = Helper.getGameState retrievedResult 
                 return match gameState, board with 
                                 | Some(state), Some(maze) -> let xPos, yPos,dir = Helper.getPositionWithDirection state   
-                                                             let cellSenses = Helper.getCellSense (maze) (xPos, yPos)  
-                                                             let returnState = {ActionSenses = ""; CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = state.ToString()}
+                                                             
+                                                             let currentCellObj = Helper.getCellObject maze (xPos,yPos)
+                                                             let returnState = match currentCellObj with 
+                                                                                | Pit | Wumpus -> {ActionSenses = "Dead"; CellSenses = []; ActorState = state.ToString()}
+                                                                                | _ -> let cellSenses = Helper.getCellSense (maze) (xPos, yPos)  
+                                                                                       {ActionSenses = ""; CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = state.ToString()}
                                                              x.Request.CreateResponse<State>(HttpStatusCode.OK, returnState)
                                 | _, _ -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
         }
