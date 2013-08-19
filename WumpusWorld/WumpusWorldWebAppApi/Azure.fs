@@ -8,9 +8,10 @@ open Microsoft.WindowsAzure.Storage.Table
 open WumpusWorld
 //let cnnString = ConfigurationManager.ConnectionStrings.["StorageConnectionString"].ConnectionString
 //let cnnString = "UseDevelopmentStorage=true"
+let cnnString = ConfigurationManager.ConnectionStrings.["StorageConnectionString"].ConnectionString
 let storageAccount =
        
-        let cnnString = ConfigurationManager.ConnectionStrings.["StorageConnectionString"].ConnectionString
+        
         CloudStorageAccount.Parse(cnnString);
 
 let tableClient = storageAccount.CreateCloudTableClient()
@@ -57,13 +58,14 @@ let insertGameLogOp boardId gameId action state  =
     op
     
     
-let insertOrUpdateGameStateOp boardId gameId xPos yPos dir  =
+let insertOrUpdateGameStateOp boardId gameId xPos yPos dir mapData =
         let s = new GameState()
         s.PartitionKey <- boardId
         s.RowKey <- gameId
         s.XPos <- xPos
         s.YPos <- yPos
-        s.Direction <- dir                                                     
+        s.Direction <- dir
+        s.MapData <- mapData                                                      
         let insertOrReplaceOperation = TableOperation.InsertOrReplace(s)
         insertOrReplaceOperation
 let executeOn_boardTable op =

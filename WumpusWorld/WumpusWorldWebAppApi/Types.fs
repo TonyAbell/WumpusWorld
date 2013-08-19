@@ -12,7 +12,10 @@ open Microsoft.WindowsAzure.Storage.Table
         inherit TableEntity()
         member val XPos = 0 with get,set
         member val YPos = 0 with get,set
+        member val GoldGraped = false with get,set
+        member val WumpusShot = false with get,set
         member val Direction = "" with get,set
+        member val MapData = "" with get,set
 
     type GameLog() =
         inherit TableEntity()    
@@ -68,7 +71,7 @@ open Microsoft.WindowsAzure.Storage.Table
                  | Right -> "Right"    
                  | Shoot -> "Shoot"    
                  | Grab -> "Grab"    
-
+    
     type ActorState = 
         | E of int * int
         | W of int * int

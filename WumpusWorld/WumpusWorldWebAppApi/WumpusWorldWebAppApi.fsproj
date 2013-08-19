@@ -142,6 +142,7 @@
     <Compile Include="Types.fs" />
     <Compile Include="Azure.fs" />
     <Compile Include="Helper.fs" />
+    <Compile Include="Engine.fs" />
     <Compile Include="ApiControllers.fs" />
     <Compile Include="HomeController.fs" />
     <Compile Include="Global.fs" />
