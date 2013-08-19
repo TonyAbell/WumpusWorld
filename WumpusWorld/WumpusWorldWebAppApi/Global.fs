@@ -42,7 +42,9 @@ type BundleConfig() =
 
         bundles.Add(StyleBundle("~/Content/css").Include("~/Content/bootstrap.css",
                                                          //"~/Content/site.css",
-                                                               "~/Content/bootstrap-responsive.css"))
+                                                         "~/Content/bootstrap-theme.css"))
+        BundleTable.EnableOptimizations <- true;
+
 
 type Route = { controller : string; action : string; id : UrlParameter }
 type ApiRoute = { id : RouteParameter }
