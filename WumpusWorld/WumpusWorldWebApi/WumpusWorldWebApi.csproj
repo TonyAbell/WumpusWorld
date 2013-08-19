@@ -148,7 +148,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="App_Start\BootstrapBundleConfig.cs" />
     <Compile Include="Controllers\SampleController.cs" />
     <Compile Include="GlimpseSecurityPolicy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -225,6 +224,8 @@
     <Content Include="Global.asax" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
+    <None Include="Properties\PublishProfiles\wumpusworld - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\wumpusworld - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-2.0.3.intellisense.js" />
     <Content Include="Scripts\jquery-2.0.3.js" />
     <Content Include="Scripts\jquery-2.0.3.min.js" />
@@ -271,6 +272,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="App_Start\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />

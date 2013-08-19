@@ -7,8 +7,11 @@ open Microsoft.WindowsAzure.Storage.Auth
 open Microsoft.WindowsAzure.Storage.Table
 open WumpusWorld
 //let cnnString = ConfigurationManager.ConnectionStrings.["StorageConnectionString"].ConnectionString
-let cnnString = "UseDevelopmentStorage=true"
-let storageAccount =  CloudStorageAccount.Parse(cnnString);
+//let cnnString = "UseDevelopmentStorage=true"
+let storageAccount =
+       
+        let cnnString = ConfigurationManager.ConnectionStrings.["StorageConnectionString"].ConnectionString
+        CloudStorageAccount.Parse(cnnString);
 
 let tableClient = storageAccount.CreateCloudTableClient()
 
