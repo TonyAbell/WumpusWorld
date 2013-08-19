@@ -16,8 +16,10 @@ open Microsoft.WindowsAzure.Storage.Table
 
     type GameLog() =
         inherit TableEntity()    
+        member val BoardId = "" with get, set
         member val Action = "" with get,set
-        
+        member val NewState = "" with get,set
+
     type Board() =
         inherit TableEntity()      
         member val MapData = "" with get,set
@@ -59,6 +61,13 @@ open Microsoft.WindowsAzure.Storage.Table
         | Right
         | Shoot
         | Grab 
+        override this.ToString() = 
+            match this with 
+                 | Forward  -> "Forward"
+                 | Left  -> "Left"
+                 | Right -> "Right"    
+                 | Shoot -> "Shoot"    
+                 | Grab -> "Grab"    
 
     type ActorState = 
         | E of int * int

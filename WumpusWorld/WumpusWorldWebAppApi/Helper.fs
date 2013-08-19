@@ -1,14 +1,10 @@
 ﻿namespace WumpusWorld
 
-open Microsoft.FSharp.Reflection 
-open System.Reflection 
-open System.Runtime.Serialization 
-open System.Runtime.Serialization.Json
+
 open System.Runtime.Serialization.Formatters.Binary
-open System.Xml
 open System.IO
 open Microsoft.WindowsAzure.Storage.Table
-open Newtonsoft.Json
+
 
 module Helper = 
     let rand = System.Random()

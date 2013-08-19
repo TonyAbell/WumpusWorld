@@ -20,7 +20,10 @@ let gameStateTable =
         let t =  tableClient.GetTableReference("gamestate")
         t.CreateIfNotExists() |> ignore
         t
-
+let gameLogTable = 
+        let t =  tableClient.GetTableReference("gamelog")
+        t.CreateIfNotExists() |> ignore
+        t
 let boardTable = 
         let t =  tableClient.GetTableReference("board")
         t.CreateIfNotExists() |> ignore
@@ -43,6 +46,17 @@ let insertOrUpdateBoard id mapData size pits =
     let op = TableOperation.InsertOrReplace(g)
     op
 
+let insertGameLogOp boardId gameId action state  =
+    let l = new GameLog()
+    l.PartitionKey <- gameId
+    l.RowKey <- System.DateTime.UtcNow.Ticks.ToString() 
+    l.BoardId <- boardId
+    l.Action <- action
+    l.NewState <- state
+    let op = TableOperation.Insert(l)
+    op
+    
+    
 let insertOrUpdateGameStateOp boardId gameId xPos yPos dir  =
         let s = new GameState()
         s.PartitionKey <- boardId
@@ -61,3 +75,8 @@ let executeOn_gameStateTable op =
     let beginExecute op =
         fun (cp,_) -> gameStateTable.BeginExecute(op,cp,null) :> System.IAsyncResult
     Async.FromBeginEnd(beginExecute op,gameStateTable.EndExecute)
+
+let executeOn_gameLogTable op =
+    let beginExecute op =
+        fun (cp,_) -> gameLogTable.BeginExecute(op,cp,null) :> System.IAsyncResult
+    Async.FromBeginEnd(beginExecute op,gameLogTable.EndExecute)

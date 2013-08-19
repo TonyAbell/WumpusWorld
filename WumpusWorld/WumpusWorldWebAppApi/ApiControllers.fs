@@ -41,8 +41,10 @@ type MoveController() =
                                                                             | _ -> async{ 
                                                                                             let actionSense, cellSenses, newGameState = Helper.move maze state action
                                                                                             let xPos, yPos,dir = Helper.getPositionWithDirection newGameState                                                                                                               
-                                                                                            let insertOrReplaceOperation = Azure.insertOrUpdateGameStateOp boardId gameId xPos yPos dir                                                         
-                                                                                            let! insertResutl = Azure.executeOn_gameStateTable insertOrReplaceOperation                                                                      
+                                                                                            let gameStateOp = Azure.insertOrUpdateGameStateOp boardId gameId xPos yPos dir                                                         
+                                                                                            let! insertResutl = Azure.executeOn_gameStateTable gameStateOp
+                                                                                            let gameLogOp = Azure.insertGameLogOp boardId gameId (action.ToString()) (newGameState.ToString())
+                                                                                            let! interLogResult = Azure.executeOn_gameLogTable gameLogOp
                                                                                             return  Some({ActionSenses = actionSense.ToString(); CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = newGameState.ToString()})                                                                                                                                                               
                                                                                          }
                                                             
@@ -99,16 +101,17 @@ type GameController() =
     let r = new System.Random()
     [<HttpGet("api/board/new/{size=10}/{pits=5}")>]
     member x.NewBoard(size:int, pits:int) =
-        async { 
-                    let t = size
-
-                    let nextId = r.Next(1, System.Int32.MaxValue)
+        async {                  
+                    let nextId = r.Next(1, System.Int32.MaxValue).ToString()
                     let newMaze = Helper.createMaze size size
-                    let newBoardId = nextId.ToString()
+                    let newBoardId = nextId
                     let boardData = Helper.ser (newMaze pits)
                     let g = new Board()           
                     let! insertOrReplaceResult = Azure.executeOn_boardTable (Azure.insertOrUpdateBoard newBoardId boardData size pits)
-                    return nextId 
+                    return match insertOrReplaceResult with
+                                    | null -> x.Request.CreateResponse<string>(HttpStatusCode.OK, nextId)
+                                    | _ ->  x.Request.CreateResponse(HttpStatusCode.BadRequest)
+                    
                    
         } |> Async.StartAsTask
 
@@ -121,6 +124,8 @@ type GameController() =
                 return! match board with 
                                 | Some b -> async {
                                                 let! insertResutl = Azure.executeOn_gameStateTable (Azure.insertOrUpdateGameStateOp boardId nextId 0 0 "S")   
+                                                let gameLogOp = Azure.insertGameLogOp boardId nextId "Init" ""
+                                                let! interLogResult = Azure.executeOn_gameLogTable gameLogOp
                                                 return x.Request.CreateResponse<string>(HttpStatusCode.OK, nextId)
                                             }
                                 | None ->  async {return x.Request.CreateResponse(HttpStatusCode.BadRequest)}
