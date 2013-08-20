@@ -27,10 +27,7 @@ module Engine =
             maze.[x, y + 1] <- (fst maze.[x, y + 1]), newSenses
 
         maze
-    let move 
-        (maze : (CellObject * CellSense list) [,]) 
-        (actorState : ActorState) 
-        (action : Action) = 
+    let move maze actorState action  = 
         let currentCellSence = Helper.getCellSense maze (Helper.getPosition actorState)
         
         match action with
@@ -89,7 +86,8 @@ module Engine =
         let x, y = pos
         let inline inMaze x y = 0 <= x && x < xMax && 0 <= y && y < yMax
         match Helper.getCellObject maze pos with
-            | Free ->   maze.[x, y] <- cellObj, []
+            | Free ->   let currentCellSenses = Helper.getCellSense maze pos
+                        maze.[x, y] <- cellObj, currentCellSenses
                         if inMaze (x - 1) (y) then 
                             maze.[x - 1, y] <- (fst maze.[x - 1, y]), ((snd maze.[x - 1, y]) @ [sense])
                         if inMaze (x + 1) (y) then 
