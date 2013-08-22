@@ -66,6 +66,7 @@ type Global() =
             { controller = "Home"; action = "Index"; id = UrlParameter.Optional } ) |> ignore
 
     member this.Start() =
+        
         GlobalConfiguration.Configuration.MapHttpAttributeRoutes()
         AreaRegistration.RegisterAllAreas()
         Global.RegisterRoutes RouteTable.Routes
