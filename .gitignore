@@ -108,3 +108,4 @@ Backup*/
 UpgradeLog*.XML
 
 WumpusWorld/WumpusWorldWebApi/Properties/PublishProfiles/
+WumpusWorld/WumpusWorldWebApi/newrelic/newrelic.config
