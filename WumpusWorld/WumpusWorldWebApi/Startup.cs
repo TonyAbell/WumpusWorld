@@ -17,7 +17,7 @@ namespace WumpusWorldWebApi
 
     public partial class Startup
     {
-         
+
 
         public void ConfigureAuth(IAppBuilder app)
         {
@@ -28,17 +28,23 @@ namespace WumpusWorldWebApi
             //app.UseMicrosoftAccountAuthentication(
             //      clientId: "",
             //      clientSecret: "");
+
             var twitterConsumerKey = ConfigurationManager.AppSettings["twitterConsumerKey"];
             var twitterconsumerSecret = ConfigurationManager.AppSettings["twitterconsumerSecret"];
-            app.UseTwitterAuthentication(
-               consumerKey: twitterConsumerKey,
-               consumerSecret: twitterconsumerSecret);
+            if (!string.IsNullOrEmpty(twitterConsumerKey) && !string.IsNullOrEmpty(twitterconsumerSecret))
+            {
+                app.UseTwitterAuthentication(
+                    consumerKey: twitterConsumerKey,
+                    consumerSecret: twitterconsumerSecret);
+
+
+            }
 
             //app.UseFacebookAuthentication(
             //   appId: "",
             //   appSecret: "");
 
-          
+
 
             app.UseGoogleAuthentication();
         }
