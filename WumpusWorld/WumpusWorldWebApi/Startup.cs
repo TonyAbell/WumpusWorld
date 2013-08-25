@@ -1,5 +1,6 @@
 ﻿
 using Owin;
+using System.Configuration;
 using WumpusWorldWebApi.Controllers;
 
 namespace WumpusWorldWebApi
@@ -27,10 +28,11 @@ namespace WumpusWorldWebApi
             //app.UseMicrosoftAccountAuthentication(
             //      clientId: "",
             //      clientSecret: "");
-
-            //app.UseTwitterAuthentication(
-            //   consumerKey: "",
-            //   consumerSecret: "");
+            var twitterConsumerKey = ConfigurationManager.AppSettings["twitterConsumerKey"];
+            var twitterconsumerSecret = ConfigurationManager.AppSettings["twitterconsumerSecret"];
+            app.UseTwitterAuthentication(
+               consumerKey: twitterConsumerKey,
+               consumerSecret: twitterconsumerSecret);
 
             //app.UseFacebookAuthentication(
             //   appId: "",
