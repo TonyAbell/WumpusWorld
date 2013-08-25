@@ -55,6 +55,8 @@ type Global() =
 
     static member RegisterGlobalFilters (filters:GlobalFilterCollection) =
         filters.Add(new HandleErrorAttribute())
+        filters.Add(new System.Web.Mvc.AuthorizeAttribute());
+        
 
     static member RegisterRoutes(routes:RouteCollection) =
         routes.IgnoreRoute( "{resource}.axd/{*pathInfo}" )

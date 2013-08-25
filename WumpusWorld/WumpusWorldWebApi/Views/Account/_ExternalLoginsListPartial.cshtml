@@ -16,7 +16,7 @@ else
     {
         @Html.AntiForgeryToken()
         <fieldset id="socialLoginList">
-            <legend>Use another service to log in.</legend>
+            <legend>Login using one of the following providers.</legend>
             <p>
                 @foreach (AuthenticationDescription p in Model)
                 {

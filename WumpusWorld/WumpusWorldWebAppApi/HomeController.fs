@@ -10,6 +10,7 @@ open System.Security.Claims
 open Microsoft.Owin.Security
 
 [<HandleError>]
+[<AllowAnonymous>]
 type HomeController() =
     inherit Controller()
     member this.Index () =

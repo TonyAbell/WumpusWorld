@@ -1,7 +1,7 @@
 ﻿module Azure
 
 open System.Configuration
-
+open System
 open Microsoft.WindowsAzure.Storage
 open Microsoft.WindowsAzure.Storage.Auth
 open Microsoft.WindowsAzure.Storage.Table
@@ -16,6 +16,18 @@ let storageAccount =
 
 let tableClient = storageAccount.CreateCloudTableClient()
 
+let userstoreTable = 
+        let t =  tableClient.GetTableReference("userstore")
+        t.CreateIfNotExists() |> ignore
+        t
+let apitokensTable = 
+        let t =  tableClient.GetTableReference("apitokens")
+        t.CreateIfNotExists() |> ignore
+        t
+let userloginstoreTable = 
+        let t =  tableClient.GetTableReference("userloginstore")
+        t.CreateIfNotExists() |> ignore
+        t
 
 let gameStateTable = 
         let t =  tableClient.GetTableReference("gamestate")
@@ -33,9 +45,16 @@ let boardTable =
 let findBoardOp boardId =
     let op = TableOperation.Retrieve<Board>("board", boardId)
     op
-let findGameStateOp boardId gameId =
-    let op = TableOperation.Retrieve<GameState>(boardId, gameId)
+
+let findApiTokenOp apiToken =
+    let op = TableOperation.Retrieve<ApiToken>(ApiToken.PartitionKeyName, apiToken)
     op
+
+let findGameStateOp boardId gameId apiToken=
+    let op = TableOperation.Retrieve<GameState>(apiToken, gameId)
+    op
+
+
 
 let insertOrUpdateBoard id mapData size pits = 
     let g = new Board()
@@ -47,10 +66,13 @@ let insertOrUpdateBoard id mapData size pits =
     let op = TableOperation.InsertOrReplace(g)
     op
 
-let insertGameLogOp boardId gameId action state  =
+let insertGameLogOp boardId gameId apiToken action state  =
     let l = new GameLog()
-    l.PartitionKey <- gameId
+    l.PartitionKey <- apiToken
     l.RowKey <- System.DateTime.UtcNow.Ticks.ToString() 
+    l.GameId <-gameId
+    l.UserId <- String.Empty
+    l.ApiToken <- apiToken
     l.BoardId <- boardId
     l.Action <- action
     l.NewState <- state
@@ -58,10 +80,13 @@ let insertGameLogOp boardId gameId action state  =
     op
     
     
-let insertOrUpdateGameStateOp boardId gameId xPos yPos dir mapData =
+let insertOrUpdateGameStateOp boardId gameId apiToken xPos yPos dir mapData =
         let s = new GameState()
-        s.PartitionKey <- boardId
+        s.PartitionKey <- apiToken
         s.RowKey <- gameId
+        s.BoardId <- boardId
+        s.UserId <- String.Empty
+        s.ApiToken <- apiToken
         s.XPos <- xPos
         s.YPos <- yPos
         s.Direction <- dir

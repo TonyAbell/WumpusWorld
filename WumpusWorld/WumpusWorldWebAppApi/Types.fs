@@ -10,6 +10,10 @@ open Microsoft.WindowsAzure.Storage.Table
 
     type GameState() =
         inherit TableEntity()
+        member val UserId = "" with get, set
+        member val ApiToken = "" with get, set
+        member val BoardId = "" with get, set
+        member val GameId = "" with get, set
         member val XPos = 0 with get,set
         member val YPos = 0 with get,set     
         member val Direction = "" with get,set
@@ -17,7 +21,10 @@ open Microsoft.WindowsAzure.Storage.Table
 
     type GameLog() =
         inherit TableEntity()    
+        member val UserId = "" with get, set
+        member val ApiToken = "" with get, set
         member val BoardId = "" with get, set
+        member val GameId = "" with get, set
         member val Action = "" with get,set
         member val NewState = "" with get,set
 
@@ -27,7 +34,12 @@ open Microsoft.WindowsAzure.Storage.Table
         member val Size = 0 with get,set
         member val Pits = 0 with get,set
 
-
+    type ApiToken() =       
+        inherit TableEntity()        
+        member val UserId = "" with get,set
+        member val IsActive = true with get,set
+        static member val PartitionKeyName = "apitoken" with get
+       
 
 
     [<Serializable>]
