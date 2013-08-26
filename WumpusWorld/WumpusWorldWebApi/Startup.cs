@@ -39,10 +39,15 @@ namespace WumpusWorldWebApi
 
 
             }
-
-            //app.UseFacebookAuthentication(
-            //   appId: "",
-            //   appSecret: "");
+            var facebookAppId = ConfigurationManager.AppSettings["facebookAppId"];
+            var facebookAppSecret = ConfigurationManager.AppSettings["facebookAppSecret"];
+            if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSecret))
+            {
+                app.UseFacebookAuthentication(
+                   appId: facebookAppId,
+                   appSecret: facebookAppSecret);
+            }
+          
 
 
 
