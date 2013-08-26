@@ -45,6 +45,7 @@ namespace WumpusWorldWebApi.Controllers
                 WumpusWorld.ApiToken tokenEntity = new WumpusWorld.ApiToken();
                 tokenEntity.PartitionKey = WumpusWorld.ApiToken.PartitionKeyName;
                 tokenEntity.RowKey = apiToken;
+                
                 tokenEntity.UserId = user.Id;
                 tokenEntity.IsActive = true;
 

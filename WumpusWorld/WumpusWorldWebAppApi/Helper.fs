@@ -78,6 +78,14 @@ module Helper =
         | S(_, _) -> S(newPosition)
         | N(_, _) -> N(newPosition)
     
+
+    let getGameScore (tableResult:TableResult) =
+         match tableResult with
+            | null -> 0
+            | t -> match t.Result with
+                     | null -> 0
+                     | r -> let s = r :?> GameState
+                            s.Score
     let getGameState (tableResult:TableResult) =
            match tableResult with
             | null -> None

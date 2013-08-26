@@ -50,8 +50,9 @@ let findApiTokenOp apiToken =
     let op = TableOperation.Retrieve<ApiToken>(ApiToken.PartitionKeyName, apiToken)
     op
 
-let findGameStateOp boardId gameId apiToken=
-    let op = TableOperation.Retrieve<GameState>(apiToken, gameId)
+let findGameStateOp boardId gameId id =
+    let userId,apiToken = id
+    let op = TableOperation.Retrieve<GameState>(userId, gameId)
     op
 
 
@@ -66,29 +67,33 @@ let insertOrUpdateBoard id mapData size pits =
     let op = TableOperation.InsertOrReplace(g)
     op
 
-let insertGameLogOp boardId gameId apiToken action state  =
+let insertGameLogOp boardId gameId id action state  =
+    let userId,apiToken = id
     let l = new GameLog()
-    l.PartitionKey <- apiToken
+    l.PartitionKey <- userId
     l.RowKey <- System.DateTime.UtcNow.Ticks.ToString() 
     l.GameId <-gameId
-    l.UserId <- String.Empty
+    l.UserId <- userId
     l.ApiToken <- apiToken
     l.BoardId <- boardId
     l.Action <- action
     l.NewState <- state
+    
     let op = TableOperation.Insert(l)
     op
     
     
-let insertOrUpdateGameStateOp boardId gameId apiToken xPos yPos dir mapData =
+let insertOrUpdateGameStateOp boardId gameId id xPos yPos dir score mapData =
         let s = new GameState()
-        s.PartitionKey <- apiToken
+        let userId,apiToken = id
+        s.PartitionKey <- userId
         s.RowKey <- gameId
         s.BoardId <- boardId
-        s.UserId <- String.Empty
+        s.UserId <- userId
         s.ApiToken <- apiToken
         s.XPos <- xPos
         s.YPos <- yPos
+        s.Score <- score
         s.Direction <- dir
         s.MapData <- mapData                                                      
         let insertOrReplaceOperation = TableOperation.InsertOrReplace(s)

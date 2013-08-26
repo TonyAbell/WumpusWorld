@@ -19,13 +19,29 @@ open System.Security.Principal
 [<DataContract>]
 [<CLIMutable>]
 type State = 
-    { [<DataMember(Name = "ActionSenses")>] ActionSenses : string
-      [<DataMember(Name = "CellSenses")>] CellSenses : string list
-      [<DataMember(Name = "ActorState")>] ActorState : string }
+    { [<DataMember(Name = "Action Senses")>] ActionSenses : string
+      [<DataMember(Name = "Cell Senses")>] CellSenses : string list
+      [<DataMember(Name = "Actor State")>] ActorState : string
+      [<DataMember(Name = "Score")>] Score : int }
 
 //type ApiIdentity()
 //    interface IIdentity with  
 //     member this.
+
+type ApiIdentity() =
+    let mutable name = ""
+    member val ApiToken = "" with get,set
+    member val UserId = "" with get,set
+    interface IIdentity with 
+        member this.Name =
+            ""
+        member this.AuthenticationType =
+            ""
+        member this.IsAuthenticated =
+            true
+
+
+
 
 type TokenValidationAttribute() =
     inherit System.Web.Http.Filters.ActionFilterAttribute()
@@ -51,9 +67,10 @@ type TokenValidationAttribute() =
                         else
                             let entity = result.Result :?> ApiToken
                             match entity.IsActive with                                            
-                                | true -> let gi = new GenericIdentity(t)
-                                          
-                                          let gp = new GenericPrincipal(gi, [|""|])
+                                | true -> let apiIdentity = new ApiIdentity()
+                                          apiIdentity.ApiToken <-t 
+                                          apiIdentity.UserId <- entity.UserId
+                                          let gp = new GenericPrincipal(apiIdentity, [|""|])
                                           HttpContext.Current.User <- gp
                                           base.OnActionExecuting(actionContext)
                                           ()
@@ -65,32 +82,39 @@ type TokenValidationAttribute() =
 type MoveController() = 
     inherit ApiController()
     
-    let moveActorAndSaveNewGameState boardId gameId apiToken action = 
+    let moveActorAndSaveNewGameState boardId gameId id action cost = 
         async { 
             
-            let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardId gameId apiToken)           
+            let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardId gameId id)           
             let gameState = Helper.getGameState retrievedResult           
-
+            
             return! match gameState with 
                             | Some(gameState) ->  async{     
                                                             let state,maze = gameState
                                                             let currentPos = Helper.getPosition state
                                                             let currentCellObj = Helper.getCellObject maze currentPos
-                                                            return! match currentCellObj with 
+                                                            let gameScore = Helper.getGameScore retrievedResult
+                                                            if gameScore = 0 then
+                                                                return!  async{ 
+                                                                                return Some({ActionSenses = "Game Over"; CellSenses = []; ActorState = state.ToString(); Score = gameScore})
+                                                                              }
+                                                            else 
+                                                                return! match currentCellObj with 
                                                                             | Pit | Wumpus -> async{ 
-                                                                                            return Some({ActionSenses = "Dead"; CellSenses = []; ActorState = state.ToString()})
+                                                                                            return Some({ActionSenses = "Dead"; CellSenses = []; ActorState = state.ToString(); Score = gameScore})
                                                                                         }
                                                                             | _ -> async{ 
                                                                                             let actionSense, newGameState, newMaze = Engine.move maze state action
                                                                                             let xPos, yPos,dir = Helper.getPositionWithDirection newGameState  
                                                                                             let cellSenses = Helper.getCellSense newMaze (xPos, yPos)                                                                                                             
-                                                                                            let mapData = Helper.ser newMaze                                                       
-                                                                                            let gameStateOp = Azure.insertOrUpdateGameStateOp boardId gameId apiToken xPos yPos dir mapData  
+                                                                                            let mapData = Helper.ser newMaze    
+                                                                                            let newScore = max (gameScore - cost) 0
+                                                                                            let gameStateOp = Azure.insertOrUpdateGameStateOp boardId gameId id xPos yPos dir newScore mapData  
                                                                                             
                                                                                             let! insertResutl = Azure.executeOn_gameStateTable gameStateOp 
-                                                                                            let gameLogOp = Azure.insertGameLogOp boardId gameId apiToken (action.ToString()) (newGameState.ToString())
+                                                                                            let gameLogOp = Azure.insertGameLogOp boardId gameId id (action.ToString()) (newGameState.ToString())
                                                                                             let! interLogResult = Azure.executeOn_gameLogTable gameLogOp
-                                                                                            return  Some({ActionSenses = actionSense.ToString(); CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = newGameState.ToString()})                                                                                                                                                               
+                                                                                            return  Some({ActionSenses = actionSense.ToString(); CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = newGameState.ToString(); Score = newScore})                                                                                                                                                               
                                                                                          }                                                            
                                                             }
                             | _ -> async{return None}                                                                   
@@ -98,8 +122,9 @@ type MoveController() =
     [<TokenValidation>]
     [<HttpGet("api/board/{boardid}/game/{gameid}/forward")>]
     member x.Forward(boardid : string, gameid: string) =
-        let apiToken = HttpContext.Current.User.Identity.Name
-        async { let! newState = moveActorAndSaveNewGameState boardid gameid apiToken Forward
+        let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
+        let id = (apiIdentity.UserId,apiIdentity.ApiToken)
+        async { let! newState = moveActorAndSaveNewGameState boardid gameid id Forward 25
                 return match newState with 
                                 | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
@@ -109,8 +134,9 @@ type MoveController() =
     [<TokenValidation>]
     [<HttpGet("api/board/{boardid}/game/{gameid}/left")>]
     member x.Left(boardid : string, gameid: string) = 
-         let apiToken = HttpContext.Current.User.Identity.Name
-         async { let!newState = moveActorAndSaveNewGameState boardid gameid apiToken Left
+         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
+         let id = (apiIdentity.UserId,apiIdentity.ApiToken)
+         async { let!newState = moveActorAndSaveNewGameState boardid gameid id Left 20
                  return match newState with 
                                 | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
@@ -119,8 +145,9 @@ type MoveController() =
     [<TokenValidation>]
     [<HttpGet("api/board/{boardid}/game/{gameid}/right")>]
     member x.Right(boardid : string, gameid: string) = 
-        let apiToken = HttpContext.Current.User.Identity.Name
-        async { let!newState = moveActorAndSaveNewGameState boardid gameid apiToken Right
+        let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
+        let id = (apiIdentity.UserId,apiIdentity.ApiToken)
+        async { let!newState = moveActorAndSaveNewGameState boardid gameid id Right 20
                 return match newState with 
                                 | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
@@ -128,8 +155,9 @@ type MoveController() =
     [<TokenValidation>]
     [<HttpGet("api/board/{boardid}/game/{gameid}/shoot")>]
     member x.Shoot(boardid : string, gameid: string) = 
-         let apiToken = HttpContext.Current.User.Identity.Name
-         async { let!newState = moveActorAndSaveNewGameState boardid gameid apiToken Shoot
+         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
+         let id = (apiIdentity.UserId,apiIdentity.ApiToken)
+         async { let!newState = moveActorAndSaveNewGameState boardid gameid id Shoot 100
                  return match newState with 
                                 | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
@@ -137,8 +165,9 @@ type MoveController() =
     [<TokenValidation>]
     [<HttpGet("api/board/{boardid}/game/{gameid}/grab")>]
     member x.Grab(boardid : string, gameid: string) = 
-         let apiToken = HttpContext.Current.User.Identity.Name
-         async { let!newState = moveActorAndSaveNewGameState boardid gameid apiToken Grab
+         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
+         let id = (apiIdentity.UserId,apiIdentity.ApiToken)
+         async { let!newState = moveActorAndSaveNewGameState boardid gameid id Grab 200
                  return match newState with 
                                 | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
@@ -171,7 +200,8 @@ type GameController() =
     [<TokenValidation>]
     [<HttpGet("api/board/{boardid}/game/new")>]
     member x.NewGame(boardId:string) = 
-        let apiToken = HttpContext.Current.User.Identity.Name
+        let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
+        let id = (apiIdentity.UserId,apiIdentity.ApiToken)
         async { 
                 
                 let nextId = r.Next(1, System.Int32.MaxValue).ToString()
@@ -180,8 +210,9 @@ type GameController() =
                 return! match board with 
                                 | Some b -> async {
                                                 let mapData = Helper.ser b
-                                                let! insertResutl = Azure.executeOn_gameStateTable (Azure.insertOrUpdateGameStateOp boardId nextId apiToken 0 0 "S" mapData)   
-                                                let gameLogOp = Azure.insertGameLogOp boardId nextId apiToken "Init" ""
+                                                let initScore = b.Length * 100
+                                                let! insertResutl = Azure.executeOn_gameStateTable (Azure.insertOrUpdateGameStateOp boardId nextId id 0 0 "S" initScore mapData)   
+                                                let gameLogOp = Azure.insertGameLogOp boardId nextId id "Init" ""
                                                 let! interLogResult = Azure.executeOn_gameLogTable gameLogOp
                                                 return x.Request.CreateResponse<string>(HttpStatusCode.OK, nextId)
                                             }
@@ -193,20 +224,22 @@ type GameController() =
     [<TokenValidation>]
     [<HttpGet("api/board/{boardid}/game/{gameid}/status")>]
     member x.Status(boardid : string, gameid: string) = 
-        let apiToken = HttpContext.Current.User.Identity.Name
+        let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
+        let id = (apiIdentity.UserId,apiIdentity.ApiToken)
         async { 
                 
-                let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardid gameid apiToken)           
+                let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardid gameid id)           
                 let stateAndMaze = Helper.getGameState retrievedResult 
+                let gameScore = Helper.getGameScore retrievedResult
                 return match stateAndMaze with 
                                 | Some(gameState)-> let state,maze = gameState
                                                     let xPos, yPos,dir = Helper.getPositionWithDirection state   
                                                              
                                                     let currentCellObj = Helper.getCellObject maze (xPos,yPos)
                                                     let returnState = match currentCellObj with 
-                                                                    | Pit | Wumpus -> {ActionSenses = "Dead"; CellSenses = []; ActorState = state.ToString()}
+                                                                    | Pit | Wumpus -> {ActionSenses = "Dead"; CellSenses = []; ActorState = state.ToString(); Score = gameScore}
                                                                     | _ -> let cellSenses = Helper.getCellSense (maze) (xPos, yPos)  
-                                                                           {ActionSenses = ""; CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = state.ToString()}
+                                                                           {ActionSenses = ""; CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = state.ToString(); Score = gameScore}
                                                     x.Request.CreateResponse<State>(HttpStatusCode.OK, returnState)
                                 |  _ -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
         }
@@ -215,10 +248,11 @@ type GameController() =
      [<TokenValidation>]
      [<HttpGet("api/board/{boardid}/game/{gameid}/view")>]
      member x.GameBoard(boardid : string, gameid: string) = 
-        let apiToken = HttpContext.Current.User.Identity.Name
+        let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
+        let id = (apiIdentity.UserId,apiIdentity.ApiToken)
         async { 
             
-            let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardid gameid apiToken)           
+            let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardid gameid id)           
             let stateAndMaze = Helper.getGameState retrievedResult 
             return match stateAndMaze with
                             | Some gameState -> 

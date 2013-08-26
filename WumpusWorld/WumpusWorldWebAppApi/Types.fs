@@ -17,6 +17,7 @@ open Microsoft.WindowsAzure.Storage.Table
         member val XPos = 0 with get,set
         member val YPos = 0 with get,set     
         member val Direction = "" with get,set
+        member val Score = 0 with get,set
         member val MapData = "" with get,set
 
     type GameLog() =
@@ -37,6 +38,7 @@ open Microsoft.WindowsAzure.Storage.Table
     type ApiToken() =       
         inherit TableEntity()        
         member val UserId = "" with get,set
+        member val ApiToken = "" with get,set
         member val IsActive = true with get,set
         static member val PartitionKeyName = "apitoken" with get
        
