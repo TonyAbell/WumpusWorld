@@ -1,28 +1,48 @@
 ﻿<h3>
     Wumpus World Server for AI Bots
 </h3>
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h3 class="panel-title">Api Auth</h3>
+    </div>
+    <div class="panel-body">
 
+        To authenticate api requests you need to include your @Html.ActionLink("api token", "Manage", "Account").
+        <br />
+        You can pass your token using a query string parameter or in the http header.
+        <br /> 
+        <div class="well">
+            Query String: ?token={api token}
+            <br />or
+            <br />
+            Header: x-wws-token: {api token}
+        </div>
+
+       
+    </div>
+</div>
 <div class="panel panel-primary">
     <div class="panel-heading">
         <h3 class="panel-title">API Structure</h3>
     </div>
     <div class="panel-body">
-        <ul class="list-group">
-            <li class="list-group-item">api/board/new/</li>
-            <li class="list-group-item">api/board/{boardid}/view</li>
-
-            <li class="list-group-item">api/board/{boardid}/game/new</li>
-            <li class="list-group-item">api/board/{boardid}/game/{gameid}/status</li>
-            <li class="list-group-item">api/board/{boardid}/game/{gameid}/view</li>
-
-
-            <li class="list-group-item">api/board/{boardid}/game/{gameid}/forward</li>
-            <li class="list-group-item">api/board/{boardid}/game/{gameid}/left</li>
-            <li class="list-group-item">api/board/{boardid}/game/{gameid}/right</li>
-            <li class="list-group-item">api/board/{boardid}/game/{gameid}/shoot</li>
-            <li class="list-group-item">api/board/{boardid}/game/{gameid}/grab</li>
-        </ul>
+      
     </div>
+    <ul class="list-group">
+        <li class="list-group-item">api/board/new/</li>
+        <li class="list-group-item">api/board/{boardid}/view</li>
+
+        <li class="list-group-item">api/board/{boardid}/game/new</li>
+        <li class="list-group-item">api/board/{boardid}/game/{gameid}/status</li>
+        <li class="list-group-item">api/board/{boardid}/game/{gameid}/view</li>
+
+
+        <li class="list-group-item">api/board/{boardid}/game/{gameid}/forward</li>
+        <li class="list-group-item">api/board/{boardid}/game/{gameid}/left</li>
+        <li class="list-group-item">api/board/{boardid}/game/{gameid}/right</li>
+        <li class="list-group-item">api/board/{boardid}/game/{gameid}/shoot</li>
+        <li class="list-group-item">api/board/{boardid}/game/{gameid}/grab</li>
+    </ul>
 </div>
 
 
@@ -99,19 +119,12 @@
         "Score": 1000}
     </div>
 </div>
+
 <div class="panel panel-primary">
     <div class="panel-heading">
-        <h3 class="panel-title">Api Auth</h3>
+        <h3 class="panel-title">Source Code</h3>
     </div>
     <div class="panel-body">
-        <p>
-            To authenticate api requests you need to include your @Html.ActionLink("api token", "Manage", "Account").
-            You can pass your token using a query string parameter or in the http header.
-          
-        </p>
-        Query String: ?token={api token}
-        <br />or
-        <br />
-        Header: x-wws-token: {api token}
+        <a href="https://github.com/TonyAbell/WumpusWorld">Git Repo</a>
     </div>
 </div>
