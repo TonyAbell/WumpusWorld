@@ -9,7 +9,7 @@ namespace WumpusWorldWebApi
     {
         public void Configuration(IAppBuilder app)
         {
-            IdentityConfig.ConfigureIdentity();
+            //IdentityConfig.ConfigureIdentity();
 
             ConfigureAuth(app);
         }
@@ -21,9 +21,9 @@ namespace WumpusWorldWebApi
 
         public void ConfigureAuth(IAppBuilder app)
         {
-            app.UseApplicationSignInCookie();
+            //app.UseApplicationSignInCookie();
 
-            app.UseExternalSignInCookie();
+            app.UseSignInCookies();
 
             //app.UseMicrosoftAccountAuthentication(
             //      clientId: "",

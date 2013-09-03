@@ -16,11 +16,243 @@ using System.Text;
 using System.Net.Http;
 using System.Web.Routing;
 using Microsoft.WindowsAzure.Storage.Table;
+using Microsoft.AspNet.Identity.Owin;
 
 
 namespace WumpusWorldWebApi.Controllers
 {
 
+    public class IdentityStore : IIdentityStore
+    {
+        public IdentityStore()
+        {
+            Users = new UserStore();
+            Logins = new UserLoginStore();
+            Roles = new RoleStore();
+            Secrets = new UserSecretStore();
+            Tokens = new TokenStore();
+            UserClaims = new UserClaimStore();
+            UserManagement = new UserManagementStore();
+        }
+
+        public IUserLoginStore Logins
+        {
+            get;
+            private set;
+        }
+
+        public IRoleStore Roles
+        {
+            get;
+            private set;
+        }
+
+        public IUserSecretStore Secrets
+        {
+            get;
+            private set;
+        }
+
+        public ITokenStore Tokens
+        {
+            get;
+            private set;
+        }
+
+        public IUserClaimStore UserClaims
+        {
+            get;
+            private set;
+        }
+
+        public IUserManagementStore UserManagement
+        {
+            get;
+            private set;
+        }
+
+        public IUserStore Users
+        {
+            get;
+            private set;
+        }
+
+        public async Task<IdentityResult> SaveChangesAsync(CancellationToken cancellationToken)
+        {
+            return new IdentityResult(true);
+        }
+        public void Dispose()
+        {
+
+        }
+    }
+
+    public class UserManagementStore : IUserManagementStore
+    {
+
+
+        public Task<IdentityResult> CreateAsync(IUserManagement info, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IUserManagement CreateNewInstance(string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IdentityResult> DeleteAsync(string userId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<IUserManagement> FindAsync(string userId, CancellationToken cancellationToken)
+        {
+            return new UserManagement() { UserId = userId, DisableSignIn = false, LastSignInTimeUtc = DateTime.UtcNow };
+        }
+
+        public async Task<IdentityResult> UpdateAsync(IUserManagement info, CancellationToken cancellationToken)
+        {
+            return new IdentityResult(true);
+        }
+    }
+    public class UserClaimStore : IUserClaimStore
+    {
+
+        public Task<IdentityResult> AddAsync(IUserClaim userClaim, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<IEnumerable<IUserClaim>> GetUserClaimsAsync(string userId, CancellationToken cancellationToken)
+        {
+            return new List<UserClaim>();
+        }
+
+        public Task<IdentityResult> RemoveAsync(string userId, string claimType, string claimValue, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    public class TokenStore : ITokenStore
+    {
+
+        public Task<IdentityResult> AddAsync(IToken token, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IToken CreateNewInstance()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IToken> FindAsync(string id, bool onlyIfValid, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IdentityResult> RemoveAsync(string token, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IdentityResult> UpdateAsync(IToken token, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class RoleStore : IRoleStore
+    {
+        public RoleStore()
+        {
+
+        }
+        public Task<IdentityResult> AddUserToRoleAsync(string userId, string roleId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IdentityResult> CreateRoleAsync(IRole role, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IdentityResult> DeleteRoleAsync(string roleId, bool failIfNonEmpty, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IRole> FindRoleAsync(string roleId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IRole> FindRoleByNameAsync(string roleName, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<IEnumerable<IRole>> GetRolesForUserAsync(string userId, CancellationToken cancellationToken)
+        {
+            return new List<Role>();
+        }
+
+        public Task<IEnumerable<string>> GetUsersInRoleAsync(string roleId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> IsUserInRoleAsync(string userId, string roleId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IdentityResult> RemoveUserFromRoleAsync(string userId, string roleId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> RoleExistsAsync(string roleId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class UserSecretStore : IUserSecretStore
+    {
+
+        public Task<IdentityResult> CreateAsync(IUserSecret userSecret, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IUserSecret CreateNewInstance(string userName, string secret)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IdentityResult> DeleteAsync(string userName, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IUserSecret> FindAsync(string userName, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IdentityResult> UpdateAsync(string userName, string newSecret, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> ValidateAsync(string userName, string loginSecret, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+    }
     public class UserStore : IUserStore
     {
 
@@ -40,18 +272,13 @@ namespace WumpusWorldWebApi.Controllers
             }
             else
             {
-
-
                 WumpusWorld.ApiToken tokenEntity = new WumpusWorld.ApiToken();
                 tokenEntity.PartitionKey = WumpusWorld.ApiToken.PartitionKeyName;
                 tokenEntity.RowKey = apiToken;
-                
                 tokenEntity.UserId = user.Id;
                 tokenEntity.IsActive = true;
-
                 var apiTokenOp = Microsoft.WindowsAzure.Storage.Table.TableOperation.InsertOrMerge(tokenEntity);
                 var insertTokenResult = Azure.apitokensTable.Execute(apiTokenOp);
-
                 return new IdentityResult(true);
             }
 
@@ -148,67 +375,96 @@ namespace WumpusWorldWebApi.Controllers
         }
     }
 
-    public static class IdentityConfig
+    //public static class IdentityConfig
+    //{
+    //    //public const string LocalLoginProvider = "Local";
+
+    //    //public static IUserSecretStore Secrets { get; set; }
+    //    public static IUserLoginStore Logins { get; set; }
+    //    public static IUserStore Users { get; set; }
+
+    //    public static string RoleClaimType { get; set; }
+    //    public static string UserNameClaimType { get; set; }
+    //    public static string UserIdClaimType { get; set; }
+    //    public static string ClaimsIssuer { get; set; }
+
+    //    public static void ConfigureIdentity()
+    //    {
+    //        Logins = new UserLoginStore();
+    //        Users = new UserStore();
+    //        //Logins = new EFUserLoginStore<UserLogin>(dbContextCreator);
+    //        //Users = new EFUserStore<User>(dbContextCreator);
+
+    //        RoleClaimType = ClaimsIdentity.DefaultRoleClaimType;
+    //        UserIdClaimType = "http://schemas.microsoft.com/aspnet/userid";
+    //        UserNameClaimType = "http://schemas.microsoft.com/aspnet/username";
+    //        ClaimsIssuer = ClaimsIdentity.DefaultIssuer;
+    //        AntiForgeryConfig.UniqueClaimTypeIdentifier = IdentityConfig.UserIdClaimType;
+    //    }
+
+    //    public static IList<Claim> RemoveUserIdentityClaims(IEnumerable<Claim> claims)
+    //    {
+    //        List<Claim> filteredClaims = new List<Claim>();
+    //        foreach (var c in claims)
+    //        {
+    //            // Strip out any existing name/nameid claims
+    //            if (c.Type != ClaimTypes.Name &&
+    //                c.Type != ClaimTypes.NameIdentifier)
+    //            {
+    //                filteredClaims.Add(c);
+    //            }
+    //        }
+    //        return filteredClaims;
+    //    }
+
+    //    public static void AddRoleClaims(IEnumerable<string> roles, IList<Claim> claims)
+    //    {
+    //        foreach (string role in roles)
+    //        {
+    //            claims.Add(new Claim(RoleClaimType, role, ClaimsIssuer));
+    //        }
+    //    }
+
+    //    public static void AddUserIdentityClaims(string userId, string displayName, IList<Claim> claims)
+    //    {
+    //        claims.Add(new Claim(ClaimTypes.Name, displayName, ClaimsIssuer));
+    //        claims.Add(new Claim(UserIdClaimType, userId, ClaimsIssuer));
+    //        claims.Add(new Claim(UserNameClaimType, displayName, ClaimsIssuer));
+    //    }
+
+    //    //public static void SignIn(HttpContextBase context, IEnumerable<Claim> userClaims, bool isPersistent)
+    //    //{
+
+    //    //    context.SignIn(userClaims, ClaimTypes.Name, RoleClaimType, isPersistent);
+    //    //}
+    //}
+    public class UserClaim : IUserClaim
     {
-        //public const string LocalLoginProvider = "Local";
 
-        //public static IUserSecretStore Secrets { get; set; }
-        public static IUserLoginStore Logins { get; set; }
-        public static IUserStore Users { get; set; }
 
-        public static string RoleClaimType { get; set; }
-        public static string UserNameClaimType { get; set; }
-        public static string UserIdClaimType { get; set; }
-        public static string ClaimsIssuer { get; set; }
+        public string ClaimType { get; set; }
 
-        public static void ConfigureIdentity()
-        {
-            Logins = new UserLoginStore();
-            Users = new UserStore();
-            //Logins = new EFUserLoginStore<UserLogin>(dbContextCreator);
-            //Users = new EFUserStore<User>(dbContextCreator);
+        public string ClaimValue { get; set; }
 
-            RoleClaimType = ClaimsIdentity.DefaultRoleClaimType;
-            UserIdClaimType = "http://schemas.microsoft.com/aspnet/userid";
-            UserNameClaimType = "http://schemas.microsoft.com/aspnet/username";
-            ClaimsIssuer = ClaimsIdentity.DefaultIssuer;
-            AntiForgeryConfig.UniqueClaimTypeIdentifier = IdentityConfig.UserIdClaimType;
-        }
+        public string UserId { get; set; }
+    }
 
-        public static IList<Claim> RemoveUserIdentityClaims(IEnumerable<Claim> claims)
-        {
-            List<Claim> filteredClaims = new List<Claim>();
-            foreach (var c in claims)
-            {
-                // Strip out any existing name/nameid claims
-                if (c.Type != ClaimTypes.Name &&
-                    c.Type != ClaimTypes.NameIdentifier)
-                {
-                    filteredClaims.Add(c);
-                }
-            }
-            return filteredClaims;
-        }
+    public class Role : IRole
+    {
 
-        public static void AddRoleClaims(IEnumerable<string> roles, IList<Claim> claims)
-        {
-            foreach (string role in roles)
-            {
-                claims.Add(new Claim(RoleClaimType, role, ClaimsIssuer));
-            }
-        }
+        public string Id { get; set; }
 
-        public static void AddUserIdentityClaims(string userId, string displayName, IList<Claim> claims)
-        {
-            claims.Add(new Claim(ClaimTypes.Name, displayName, ClaimsIssuer));
-            claims.Add(new Claim(UserIdClaimType, userId, ClaimsIssuer));
-            claims.Add(new Claim(UserNameClaimType, displayName, ClaimsIssuer));
-        }
+        public string Name { get; set; }
+    }
 
-        public static void SignIn(HttpContextBase context, IEnumerable<Claim> userClaims, bool isPersistent)
-        {
-            context.SignIn(userClaims, ClaimTypes.Name, RoleClaimType, isPersistent);
-        }
+    public class UserManagement : IUserManagement
+    {
+
+        public bool DisableSignIn { get; set; }
+
+        public DateTime LastSignInTimeUtc { get; set; }
+
+        public string UserId { get; set; }
     }
 
     public class User : Microsoft.WindowsAzure.Storage.Table.TableEntity, IUser
@@ -271,25 +527,23 @@ namespace WumpusWorldWebApi.Controllers
     [Authorize]
     public class AccountController : Controller
     {
-        public IUserLoginStore Logins { get; private set; }
-        public IUserStore Users { get; private set; }
         public AccountController()
         {
-            Logins = IdentityConfig.Logins;
-            Users = IdentityConfig.Users;
+            IdentityManager = new IdentityManager(new IdentityStore());
+            AuthenticationManager = new AuthenticationManager(new IdentityAuthenticationOptions(), IdentityManager);
         }
 
-
-        public async Task<ActionResult> Manage()
+        public AccountController(IdentityManager storeManager, AuthenticationManager authManager)
         {
-            var token = new CancellationToken();
-            var id = this.User.Identity.GetUserId();
-            var user = await Users.FindAsync(id, token) as User;
-            ViewBag.ApiToken = user.ApiToken;
-            return View();
+            IdentityManager = storeManager;
+            AuthenticationManager = authManager;
         }
 
+        public IdentityManager IdentityManager { get; private set; }
+        public AuthenticationManager AuthenticationManager { get; private set; }
 
+        //
+        // GET: /Account/Login
         [AllowAnonymous]
         public ActionResult Login(string returnUrl)
         {
@@ -297,104 +551,99 @@ namespace WumpusWorldWebApi.Controllers
             return View();
         }
 
-        private async Task SignIn(string userId, IEnumerable<Claim> claims, bool isPersistent)
+        private Microsoft.Owin.Security.IAuthenticationManager OwinAuthManager
         {
-            var token = new CancellationToken();
-            User user = await Users.FindAsync(userId, token) as User;
-            if (user != null)
+            get
             {
-                // Replace UserIdentity claims with the application specific claims
-                IList<Claim> userClaims = IdentityConfig.RemoveUserIdentityClaims(claims);
-                IdentityConfig.AddUserIdentityClaims(userId, user.UserName, userClaims);
-
-                IdentityConfig.SignIn(HttpContext, userClaims, isPersistent);
+                return HttpContextBaseExtensions.GetOwinContext(HttpContext).Authentication;
             }
         }
 
+
+        //
+        // POST: /Account/ExternalLogin
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public ActionResult ExternalLogin(string provider, string returnUrl)
         {
             // Request a redirect to the external login provider
-            return new ChallengeResult(provider, Url.Action("ExternalLoginCallback", "Account", new { loginProvider = provider, ReturnUrl = returnUrl }));
+            return new ChallengeResult(provider, Url.Action("ExternalLoginCallback", "Account", new { loginProvider = provider, ReturnUrl = returnUrl }), AuthenticationManager);
         }
 
+        private bool VerifyExternalIdentity(ClaimsIdentity id, string loginProvider)
+        {
+            if (id == null)
+            {
+                return false;
+            }
+            Claim claim = id.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+            return claim != null && claim.Issuer == loginProvider;
+        }
+
+        //
+        // GET: /Account/ExternalLoginCallback
         [AllowAnonymous]
         public async Task<ActionResult> ExternalLoginCallback(string loginProvider, string returnUrl)
         {
-            // Get the information about the user from the external login provider
-            var token = new CancellationToken();
-
-            ClaimsIdentity id = await HttpContext.GetExternalIdentity();
-            if (id == null)
+            ClaimsIdentity id = await AuthenticationManager.GetExternalIdentityAsync(HttpContextBaseExtensions.GetOwinContext(HttpContext).Authentication);
+            if (!VerifyExternalIdentity(id, loginProvider))
             {
                 return View("ExternalLoginFailure");
             }
 
-            // Make sure the external identity is from the loginProvider we expect
-            Claim providerKeyClaim = id.FindFirst(ClaimTypes.NameIdentifier);
-            if (providerKeyClaim == null || providerKeyClaim.Issuer != loginProvider)
-            {
-                return View("ExternalLoginFailure");
-            }
+            // Sign in this external identity if its already linked
+            var authManager = AuthenticationManager;
+            var tmp2 = HttpContextBaseExtensions.GetOwinContext(HttpContext);
+            var tmp3 = tmp2.Authentication;
 
-            // Succeeded so we should be able to lookup the local user name and sign them in
-            string providerKey = providerKeyClaim.Value;
-            string userId = await Logins.GetUserIdAsync(loginProvider, providerKey, token);
-            if (!String.IsNullOrEmpty(userId))
+
+
+            var result = await AuthenticationManager.SignInExternalIdentityAsync(HttpContextBaseExtensions.GetOwinContext(HttpContext).Authentication, id);
+            if (result.Success)
             {
-                await SignIn(userId, id.Claims, isPersistent: true);
+                return RedirectToLocal(returnUrl);
+            }
+            else if (User.Identity.IsAuthenticated)
+            {
+                // Try to link if the user is already signed in
+                if ((await AuthenticationManager.LinkExternalIdentityAsync(id, User.Identity.GetUserId())).Success)
+                {
+                    return RedirectToLocal(returnUrl);
+                }
+                else
+                {
+                    return View("ExternalLoginFailure");
+                }
             }
             else
             {
+                // Otherwise prompt to create a local user
                 ViewBag.ReturnUrl = returnUrl;
                 return View("ExternalLoginConfirmation", new ExternalLoginConfirmationViewModel { UserName = id.Name, LoginProvider = loginProvider });
-
             }
-
-            return RedirectToLocal(returnUrl);
         }
 
+        //
+        // POST: /Account/ExternalLoginConfirmation
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> ExternalLoginConfirmation(ExternalLoginConfirmationViewModel model, string returnUrl)
         {
-            var token = new CancellationToken();
             if (User.Identity.IsAuthenticated)
             {
-                // return RedirectToAction("Manage");
-                return RedirectToAction("Home", "Index");
+                return RedirectToAction("Manage");
             }
 
             if (ModelState.IsValid)
             {
                 // Get the information about the user from the external login provider
-                ClaimsIdentity id = await HttpContext.GetExternalIdentity();
-                if (id == null)
+                if ((await AuthenticationManager.CreateAndSignInExternalUserAsync(HttpContextBaseExtensions.GetOwinContext(HttpContext).Authentication, new User(model.UserName))).Success)
                 {
-                    return View("ExternalLoginFailure");
+                    return RedirectToLocal(returnUrl);
                 }
-                try
-                {
-
-                    //  Create a local user and sign in
-                    var user = new User(model.UserName);
-                    var tmp1 = await Users.CreateAsync(user, token);
-                    var tmp2 = await Logins.AddAsync(new UserLogin(user.Id, model.LoginProvider, id.FindFirstValue(ClaimTypes.NameIdentifier)), token);
-
-                    if (tmp1.Success && tmp2.Success)
-                    {
-                        await SignIn(user.Id, id.Claims, isPersistent: true);
-                        return RedirectToLocal(returnUrl);
-                    }
-                    else
-                    {
-                        return View("ExternalLoginFailure");
-                    }
-                }
-                catch (Exception e)
+                else
                 {
                     return View("ExternalLoginFailure");
                 }
@@ -404,27 +653,56 @@ namespace WumpusWorldWebApi.Controllers
             return View(model);
         }
 
-
-
+        //
+        // POST: /Account/LogOff
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult LogOff()
         {
-            HttpContext.SignOut();
+            HttpContextBaseExtensions.GetOwinContext(HttpContext).Authentication.SignOut(new string[0]);
             return RedirectToAction("Index", "Home");
         }
+
+        //
+        // GET: /Account/ExternalLoginFailure
         [AllowAnonymous]
         public ActionResult ExternalLoginFailure()
         {
             return View();
         }
+
         [AllowAnonymous]
         [ChildActionOnly]
         public ActionResult ExternalLoginsList(string returnUrl)
         {
             ViewBag.ReturnUrl = returnUrl;
-            return (ActionResult)PartialView("_ExternalLoginsListPartial", new List<AuthenticationDescription>(HttpContext.GetExternalAuthenticationTypes()));
+            return (ActionResult)PartialView("_ExternalLoginsListPartial", new List<AuthenticationDescription>(
+                HttpContextBaseExtensions.GetOwinContext(HttpContext).Authentication.GetExternalAuthenticationTypes()
+                ));
         }
+
+        [ChildActionOnly]
+        public ActionResult RemoveAccountList()
+        {
+            return Task.Run(async () =>
+            {
+                var linkedAccounts = await new LoginManager(IdentityManager).GetLoginsAsync(User.Identity.GetUserId());
+                ViewBag.ShowRemoveButton = linkedAccounts.Count() > 1;
+                return (ActionResult)PartialView("_RemoveAccountPartial", linkedAccounts);
+            }).Result;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && IdentityManager != null)
+            {
+                IdentityManager.Dispose();
+                IdentityManager = null;
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Helpers
         private ActionResult RedirectToLocal(string returnUrl)
         {
             if (Url.IsLocalUrl(returnUrl))
@@ -439,50 +717,63 @@ namespace WumpusWorldWebApi.Controllers
 
         private class ChallengeResult : HttpUnauthorizedResult
         {
-            public ChallengeResult(string provider, string redirectUrl)
+            public ChallengeResult(string provider, string redirectUrl, AuthenticationManager manager)
             {
                 LoginProvider = provider;
                 RedirectUrl = redirectUrl;
+                Manager = manager;
             }
 
             public string LoginProvider { get; set; }
             public string RedirectUrl { get; set; }
+            public AuthenticationManager Manager { get; set; }
 
             public override void ExecuteResult(ControllerContext context)
             {
-                context.HttpContext.Challenge(LoginProvider, new AuthenticationExtra() { RedirectUrl = RedirectUrl });
+                HttpContextBaseExtensions.GetOwinContext(context.HttpContext).Authentication.Challenge(new AuthenticationProperties { RedirectUrl = RedirectUrl }, LoginProvider);
             }
         }
+
+        public enum ManageMessageId
+        {
+            ChangePasswordSuccess,
+            SetPasswordSuccess,
+            RemoveLoginSuccess,
+        }
+
+        #endregion
     }
 }
 
-namespace Microsoft.AspNet.Identity
-{
-    public static class IdentityExtensions
-    {
-        public static string GetUserName(this IIdentity identity)
-        {
-            return identity.Name;
-        }
 
-        public static string GetUserId(this IIdentity identity)
-        {
-            ClaimsIdentity ci = identity as ClaimsIdentity;
-            if (ci != null)
-            {
-                return ci.FindFirstValue(WumpusWorldWebApi.Controllers.IdentityConfig.UserIdClaimType);
-            }
-            return String.Empty;
-        }
 
-        public static string FindFirstValue(this ClaimsIdentity identity, string claimType)
-        {
-            Claim claim = identity.FindFirst(claimType);
-            if (claim != null)
-            {
-                return claim.Value;
-            }
-            return null;
-        }
-    }
-}
+//namespace Microsoft.AspNet.Identity
+//{
+//    public static class IdentityExtensions
+//    {
+//        public static string GetUserName(this IIdentity identity)
+//        {
+//            return identity.Name;
+//        }
+
+//        public static string GetUserId(this IIdentity identity)
+//        {
+//            ClaimsIdentity ci = identity as ClaimsIdentity;
+//            if (ci != null)
+//            {
+//                return ci.FindFirstValue(WumpusWorldWebApi.Controllers.IdentityConfig.UserIdClaimType);
+//            }
+//            return String.Empty;
+//        }
+
+//        public static string FindFirstValue(this ClaimsIdentity identity, string claimType)
+//        {
+//            Claim claim = identity.FindFirst(claimType);
+//            if (claim != null)
+//            {
+//                return claim.Value;
+//            }
+//            return null;
+//        }
+//    }
+//}
