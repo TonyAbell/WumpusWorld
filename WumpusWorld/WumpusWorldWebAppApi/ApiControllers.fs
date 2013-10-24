@@ -120,7 +120,7 @@ type MoveController() =
                             | _ -> async{return None}                                                                   
         }
     [<TokenValidation>]
-    [<HttpGet("api/board/{boardid}/game/{gameid}/forward")>]
+    [<Route("api/board/{boardid}/game/{gameid}/forward")>]
     member x.Forward(boardid : string, gameid: string) =
         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
         let id = (apiIdentity.UserId,apiIdentity.ApiToken)
@@ -132,7 +132,7 @@ type MoveController() =
                 } |> Async.StartAsTask
     
     [<TokenValidation>]
-    [<HttpGet("api/board/{boardid}/game/{gameid}/left")>]
+    [<Route("api/board/{boardid}/game/{gameid}/left")>]
     member x.Left(boardid : string, gameid: string) = 
          let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
          let id = (apiIdentity.UserId,apiIdentity.ApiToken)
@@ -143,7 +143,7 @@ type MoveController() =
                 } |> Async.StartAsTask
     
     [<TokenValidation>]
-    [<HttpGet("api/board/{boardid}/game/{gameid}/right")>]
+    [<Route("api/board/{boardid}/game/{gameid}/right")>]
     member x.Right(boardid : string, gameid: string) = 
         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
         let id = (apiIdentity.UserId,apiIdentity.ApiToken)
@@ -153,7 +153,7 @@ type MoveController() =
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
                 } |> Async.StartAsTask
     [<TokenValidation>]
-    [<HttpGet("api/board/{boardid}/game/{gameid}/shoot")>]
+    [<Route("api/board/{boardid}/game/{gameid}/shoot")>]
     member x.Shoot(boardid : string, gameid: string) = 
          let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
          let id = (apiIdentity.UserId,apiIdentity.ApiToken)
@@ -163,7 +163,7 @@ type MoveController() =
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
                 } |> Async.StartAsTask
     [<TokenValidation>]
-    [<HttpGet("api/board/{boardid}/game/{gameid}/grab")>]
+    [<Route("api/board/{boardid}/game/{gameid}/grab")>]
     member x.Grab(boardid : string, gameid: string) = 
          let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
          let id = (apiIdentity.UserId,apiIdentity.ApiToken)
@@ -180,7 +180,7 @@ type GameController() =
     let r = new System.Random()
 
     [<TokenValidation>]
-    [<HttpGet("api/board/new/{size=10}/{pits=5}")>]
+    [<Route("api/board/new/{size=10}/{pits=5}")>]
     member x.NewBoard(size:int, pits:int) =
         async {                  
                     
@@ -198,7 +198,7 @@ type GameController() =
         } |> Async.StartAsTask
 
     [<TokenValidation>]
-    [<HttpGet("api/board/{boardid}/game/new")>]
+    [<Route("api/board/{boardid}/game/new")>]
     member x.NewGame(boardId:string) = 
         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
         let id = (apiIdentity.UserId,apiIdentity.ApiToken)
@@ -222,7 +222,7 @@ type GameController() =
         |> Async.StartAsTask
     
     [<TokenValidation>]
-    [<HttpGet("api/board/{boardid}/game/{gameid}/status")>]
+    [<Route("api/board/{boardid}/game/{gameid}/status")>]
     member x.Status(boardid : string, gameid: string) = 
         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
         let id = (apiIdentity.UserId,apiIdentity.ApiToken)
@@ -246,7 +246,7 @@ type GameController() =
          |> Async.StartAsTask
 
      [<TokenValidation>]
-     [<HttpGet("api/board/{boardid}/game/{gameid}/view")>]
+     [<Route("api/board/{boardid}/game/{gameid}/view")>]
      member x.GameBoard(boardid : string, gameid: string) = 
         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
         let id = (apiIdentity.UserId,apiIdentity.ApiToken)
@@ -273,7 +273,7 @@ type GameController() =
         } |> Async.StartAsTask
 
     [<TokenValidation>]
-    [<HttpGet("api/board/{boardid}/view")>]
+    [<Route("api/board/{boardid}/view")>]
     member x.Board(boardid : string) = 
         async { 
 
