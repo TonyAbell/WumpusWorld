@@ -69,6 +69,24 @@
         <IgnoredElement>
           <TextualIdentifier>1411878410941397732</TextualIdentifier>
         </IgnoredElement>
+        <IgnoredElement>
+          <TextualIdentifier>6230751370324392655</TextualIdentifier>
+        </IgnoredElement>
+        <IgnoredElement>
+          <TextualIdentifier>12752592781002058668</TextualIdentifier>
+        </IgnoredElement>
+        <IgnoredElement>
+          <TextualIdentifier>3333642355428365186</TextualIdentifier>
+        </IgnoredElement>
+        <IgnoredElement>
+          <TextualIdentifier>11396326036585324425</TextualIdentifier>
+        </IgnoredElement>
+        <IgnoredElement>
+          <TextualIdentifier>14962187995845489784</TextualIdentifier>
+        </IgnoredElement>
+        <IgnoredElement>
+          <TextualIdentifier>17738554238093942370</TextualIdentifier>
+        </IgnoredElement>
       </FilePath>
       <FilePath>
         <FileRelativePath>WumpusWorld/WumpusWorldWebApi/Content/bootstrap.css</FileRelativePath>
