@@ -9,13 +9,11 @@ open System.Net
 open System.Collections
 open System.Collections.Specialized
 open System.Collections.Generic
-
 open System.Runtime.Serialization
 open System.Data.Services.Common
-open Microsoft.WindowsAzure.Storage
-open Microsoft.WindowsAzure.Storage.Auth
-open Microsoft.WindowsAzure.Storage.Table
 open System.Security.Principal
+
+
 [<DataContract>]
 [<CLIMutable>]
 type State = 
@@ -24,9 +22,6 @@ type State =
       [<DataMember(Name = "Actor State")>] ActorState : string
       [<DataMember(Name = "Score")>] Score : int }
 
-//type ApiIdentity()
-//    interface IIdentity with  
-//     member this.
 
 type ApiIdentity() =
     let mutable name = ""
@@ -85,7 +80,8 @@ type MoveController() =
     let moveActorAndSaveNewGameState boardId gameId id action cost = 
         async { 
             
-            let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardId gameId id)           
+            //let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardId gameId id) 
+            let! retrievedResult = Azure.awaitOp_GameStateTable (Azure.findGameStateOp boardId gameId id)
             let gameState = Helper.getGameState retrievedResult           
             
             return! match gameState with 
@@ -111,15 +107,16 @@ type MoveController() =
                                                                                             let newScore = max (gameScore - cost) 0
                                                                                             let gameStateOp = Azure.insertOrUpdateGameStateOp boardId gameId id xPos yPos dir newScore mapData  
                                                                                             
-                                                                                            let! insertResutl = Azure.executeOn_gameStateTable gameStateOp 
+                                                                                            let! insertResutl = Azure.awaitOp_GameStateTable gameStateOp
                                                                                             let gameLogOp = Azure.insertGameLogOp boardId gameId id (action.ToString()) (newGameState.ToString())
-                                                                                            let! interLogResult = Azure.executeOn_gameLogTable gameLogOp
+                                                                                            let! interLogResult = Azure.awaitOp_GameLogTable gameLogOp
                                                                                             return  Some({ActionSenses = actionSense.ToString(); CellSenses = List.map (fun f -> f.ToString()) cellSenses; ActorState = newGameState.ToString(); Score = newScore})                                                                                                                                                               
                                                                                          }                                                            
                                                             }
                             | _ -> async{return None}                                                                   
         }
     [<TokenValidation>]
+    [<HttpGet>]
     [<Route("api/board/{boardid}/game/{gameid}/forward")>]
     member x.Forward(boardid : string, gameid: string) =
         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
@@ -132,17 +129,19 @@ type MoveController() =
                 } |> Async.StartAsTask
     
     [<TokenValidation>]
+    [<HttpGet>]
     [<Route("api/board/{boardid}/game/{gameid}/left")>]
     member x.Left(boardid : string, gameid: string) = 
          let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
          let id = (apiIdentity.UserId,apiIdentity.ApiToken)
-         async { let!newState = moveActorAndSaveNewGameState boardid gameid id Left 20
+         async { let! newState = moveActorAndSaveNewGameState boardid gameid id Left 20
                  return match newState with 
                                 | Some state -> x.Request.CreateResponse<State>(HttpStatusCode.OK, state)
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
                 } |> Async.StartAsTask
     
     [<TokenValidation>]
+    [<HttpGet>]
     [<Route("api/board/{boardid}/game/{gameid}/right")>]
     member x.Right(boardid : string, gameid: string) = 
         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
@@ -153,6 +152,7 @@ type MoveController() =
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
                 } |> Async.StartAsTask
     [<TokenValidation>]
+    [<HttpGet>]
     [<Route("api/board/{boardid}/game/{gameid}/shoot")>]
     member x.Shoot(boardid : string, gameid: string) = 
          let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
@@ -163,6 +163,7 @@ type MoveController() =
                                 | None -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
                 } |> Async.StartAsTask
     [<TokenValidation>]
+    [<HttpGet>]
     [<Route("api/board/{boardid}/game/{gameid}/grab")>]
     member x.Grab(boardid : string, gameid: string) = 
          let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
@@ -180,6 +181,7 @@ type GameController() =
     let r = new System.Random()
 
     [<TokenValidation>]
+    [<HttpGet>]
     [<Route("api/board/new/{size=10}/{pits=5}")>]
     member x.NewBoard(size:int, pits:int) =
         async {                  
@@ -189,7 +191,8 @@ type GameController() =
                     let newBoardId = nextId
                     let boardData = Helper.ser (newMaze pits)
                     let g = new Board()           
-                    let! insertOrReplaceResult = Azure.executeOn_boardTable (Azure.insertOrUpdateBoard newBoardId boardData size pits)
+                    //let! insertOrReplaceResult = Azure.executeOn_boardTable (Azure.insertOrUpdateBoard newBoardId boardData size pits)
+                    let! insertOrReplaceResult = Azure.awaitOp_BoardTable (Azure.insertOrUpdateBoard newBoardId boardData size pits)
                     return match insertOrReplaceResult with
                                     | null -> x.Request.CreateResponse(HttpStatusCode.BadRequest)
                                     | _ ->  x.Request.CreateResponse<string>(HttpStatusCode.OK, nextId)
@@ -198,6 +201,7 @@ type GameController() =
         } |> Async.StartAsTask
 
     [<TokenValidation>]
+    [<HttpGet>]
     [<Route("api/board/{boardid}/game/new")>]
     member x.NewGame(boardId:string) = 
         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
@@ -205,15 +209,15 @@ type GameController() =
         async { 
                 
                 let nextId = r.Next(1, System.Int32.MaxValue).ToString()
-                let! retrieveGameBoardResult = Azure.executeOn_boardTable (Azure.findBoardOp boardId)            
+                let! retrieveGameBoardResult = Azure.awaitOp_BoardTable (Azure.findBoardOp boardId)            
                 let board = Helper.getMazeFromTable retrieveGameBoardResult  
                 return! match board with 
                                 | Some b -> async {
                                                 let mapData = Helper.ser b
                                                 let initScore = b.Length * 100
-                                                let! insertResutl = Azure.executeOn_gameStateTable (Azure.insertOrUpdateGameStateOp boardId nextId id 0 0 "S" initScore mapData)   
+                                                let! insertResutl = Azure.awaitOp_GameStateTable (Azure.insertOrUpdateGameStateOp boardId nextId id 0 0 "S" initScore mapData)   
                                                 let gameLogOp = Azure.insertGameLogOp boardId nextId id "Init" ""
-                                                let! interLogResult = Azure.executeOn_gameLogTable gameLogOp
+                                                let! interLogResult = Azure.awaitOp_GameLogTable gameLogOp
                                                 return x.Request.CreateResponse<string>(HttpStatusCode.OK, nextId)
                                             }
                                 | None ->  async {return x.Request.CreateResponse(HttpStatusCode.BadRequest)}
@@ -222,13 +226,14 @@ type GameController() =
         |> Async.StartAsTask
     
     [<TokenValidation>]
+    [<HttpGet>]
     [<Route("api/board/{boardid}/game/{gameid}/status")>]
     member x.Status(boardid : string, gameid: string) = 
         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
         let id = (apiIdentity.UserId,apiIdentity.ApiToken)
         async { 
                 
-                let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardid gameid id)           
+                let! retrievedResult = Azure.awaitOp_GameStateTable (Azure.findGameStateOp boardid gameid id)           
                 let stateAndMaze = Helper.getGameState retrievedResult 
                 let gameScore = Helper.getGameScore retrievedResult
                 return match stateAndMaze with 
@@ -246,13 +251,14 @@ type GameController() =
          |> Async.StartAsTask
 
      [<TokenValidation>]
+     [<HttpGet>]
      [<Route("api/board/{boardid}/game/{gameid}/view")>]
      member x.GameBoard(boardid : string, gameid: string) = 
         let apiIdentity = HttpContext.Current.User.Identity :?> ApiIdentity
         let id = (apiIdentity.UserId,apiIdentity.ApiToken)
         async { 
             
-            let! retrievedResult = Azure.executeOn_gameStateTable (Azure.findGameStateOp boardid gameid id)           
+            let! retrievedResult = Azure.awaitOp_GameStateTable (Azure.findGameStateOp boardid gameid id)           
             let stateAndMaze = Helper.getGameState retrievedResult 
             return match stateAndMaze with
                             | Some gameState -> 
@@ -273,11 +279,12 @@ type GameController() =
         } |> Async.StartAsTask
 
     [<TokenValidation>]
+    [<HttpGet>]
     [<Route("api/board/{boardid}/view")>]
     member x.Board(boardid : string) = 
         async { 
 
-            let! retrieveGameBoardResult = Azure.executeOn_boardTable (Azure.findBoardOp boardid)            
+            let! retrieveGameBoardResult = Azure.awaitOp_BoardTable (Azure.findBoardOp boardid)            
             let board = Helper.getMazeFromTable retrieveGameBoardResult      
             return match board with
                             | Some maze -> let lenght = maze |> Array2D.length1  

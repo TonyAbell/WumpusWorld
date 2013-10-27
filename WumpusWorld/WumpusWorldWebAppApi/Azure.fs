@@ -9,53 +9,48 @@ open WumpusWorld
 //let cnnString = ConfigurationManager.ConnectionStrings.["StorageConnectionString"].ConnectionString
 //let cnnString = "UseDevelopmentStorage=true"
 let cnnString = ConfigurationManager.ConnectionStrings.["StorageConnectionString"].ConnectionString
-let storageAccount =
-       
-        
-        CloudStorageAccount.Parse(cnnString);
+let storageAccount =               
+        CloudStorageAccount.Parse(cnnString)
 
 let tableClient = storageAccount.CreateCloudTableClient()
 
 let userstoreTable = 
-        let t =  tableClient.GetTableReference("userstore")
-        t.CreateIfNotExists() |> ignore
-        t
+        tableClient.GetTableReference("userstore")       
 let apitokensTable = 
-        let t =  tableClient.GetTableReference("apitokens")
-        t.CreateIfNotExists() |> ignore
-        t
+        tableClient.GetTableReference("apitokens")       
 let userloginstoreTable = 
-        let t =  tableClient.GetTableReference("userloginstore")
-        t.CreateIfNotExists() |> ignore
-        t
-
+        tableClient.GetTableReference("userloginstore")        
 let gameStateTable = 
-        let t =  tableClient.GetTableReference("gamestate")
-        t.CreateIfNotExists() |> ignore
-        t
+        tableClient.GetTableReference("gamestate")        
 let gameLogTable = 
-        let t =  tableClient.GetTableReference("gamelog")
-        t.CreateIfNotExists() |> ignore
-        t
+        tableClient.GetTableReference("gamelog")                
 let boardTable = 
-        let t =  tableClient.GetTableReference("board")
-        t.CreateIfNotExists() |> ignore
-        t
+        tableClient.GetTableReference("board")
+        
+let initTables = 
+       [Async.AwaitTask (userstoreTable.CreateIfNotExistsAsync());
+        Async.AwaitTask (apitokensTable.CreateIfNotExistsAsync());
+        Async.AwaitTask (userloginstoreTable.CreateIfNotExistsAsync());
+        Async.AwaitTask (gameStateTable.CreateIfNotExistsAsync());
+        Async.AwaitTask (gameLogTable.CreateIfNotExistsAsync());
+        Async.AwaitTask (boardTable.CreateIfNotExistsAsync())] 
+        |> Async.Parallel
+        |> Async.RunSynchronously
+        |> ignore
 
+    
 let findBoardOp boardId =
-    let op = TableOperation.Retrieve<Board>("board", boardId)
-    op
+    TableOperation.Retrieve<Board>("board", boardId)
+    
 
 let findApiTokenOp apiToken =
-    let op = TableOperation.Retrieve<ApiToken>(ApiToken.PartitionKeyName, apiToken)
-    op
+    TableOperation.Retrieve<ApiToken>(ApiToken.PartitionKeyName, apiToken)
+    
 
 let findGameStateOp boardId gameId id =
     let userId,apiToken = id
-    let op = TableOperation.Retrieve<GameState>(userId, gameId)
-    op
-
-
+    TableOperation.Retrieve<GameState>(userId, gameId)
+    
 
 let insertOrUpdateBoard id mapData size pits = 
     let g = new Board()
@@ -98,17 +93,15 @@ let insertOrUpdateGameStateOp boardId gameId id xPos yPos dir score mapData =
         s.MapData <- mapData                                                      
         let insertOrReplaceOperation = TableOperation.InsertOrReplace(s)
         insertOrReplaceOperation
-let executeOn_boardTable op =
-    let beginExecute op =
-        fun (cp,_) -> boardTable.BeginExecute(op,cp,null) :> System.IAsyncResult
-    Async.FromBeginEnd(beginExecute op,boardTable.EndExecute)
 
-let executeOn_gameStateTable op =
-    let beginExecute op =
-        fun (cp,_) -> gameStateTable.BeginExecute(op,cp,null) :> System.IAsyncResult
-    Async.FromBeginEnd(beginExecute op,gameStateTable.EndExecute)
+let awaitOp (table:CloudTable) (op:TableOperation) =
+    Async.AwaitTask (table.ExecuteAsync op)
 
-let executeOn_gameLogTable op =
-    let beginExecute op =
-        fun (cp,_) -> gameLogTable.BeginExecute(op,cp,null) :> System.IAsyncResult
-    Async.FromBeginEnd(beginExecute op,gameLogTable.EndExecute)
+let awaitOp_BoardTable op =
+    awaitOp boardTable op  
+
+let awaitOp_GameStateTable op =
+    awaitOp gameStateTable op
+
+let awaitOp_GameLogTable op =
+    awaitOp gameLogTable op
